@@ -1,0 +1,12 @@
+[ ] ChatGPT logs (for any purposes used)
+[ ] Chosen plan (Markdown)
+[ ] Chosen prompt used for the plan generation (Markdown)
+[ ] Chosen prompt used for the implementation generation (Markdown)
+[ ] GitHub repo link including commit history of your changes from the output you got (either done manually or with GPT help)
+[ ] The initial implementation version you chose to work on to achieve your final playable
+[ ] Final playable (runnable HTML5/TS)
+[ ] Answers to the following questions:
+	• How did you pick and evaluate the plan to use for the implementation generation?
+	• How did you pick the initial implementation version you modified to create the final playable?
+	• Describe the process you followed for this task.
+	• Describe how much time approximately you spend on planning generation, implementation generation and on the fixes to get the final playable version.
