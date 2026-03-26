@@ -1,7 +1,7 @@
 [ ] ChatGPT logs (for any purposes used)
-[ ] Chosen plan (Markdown)
-[ ] Chosen prompt used for the plan generation (Markdown)
-[ ] Chosen prompt used for the implementation generation (Markdown)
+[X] Chosen plan (Markdown)
+[X] Chosen prompt used for the plan generation (Markdown)
+[X] Chosen prompt used for the implementation generation (Markdown)
 [ ] GitHub repo link including commit history of your changes from the output you got (either done manually or with GPT help)
 [ ] The initial implementation version you chose to work on to achieve your final playable
 [ ] Final playable (runnable HTML5/TS)
