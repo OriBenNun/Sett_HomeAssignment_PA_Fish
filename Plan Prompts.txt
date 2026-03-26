@@ -1,0 +1,23 @@
+Your task:
+Read the PRD attached and produce a detailed technical plan describing how to implement the playable in a single HTML file.
+The plan should include:
+		1.  Core systems and architecture.
+		2.  Gameplay flow.
+		3.  Entities and data.
+		4.  Step by step implementation plan.
+Output format: clear Markdown document.
+Focus only on the plan for now; no code is needed yet.
+
+-----------------
+
+I'm a bit skeptic about the 2.5D approach. The PRD was pretty clear on "3D primitives". How complex is it to add those? don't change the plan, let's chat about it first
+
+-----------------
+
+Yes, re-reading the PRD makes it pretty clear it doesn't have to use any assets (or be pretty) but it should be a real 3D shape. However, we need a few more changes:
+1. The "Shop" and "gauge" states are actually the same. The player can buy upgrades before entering the next round, but the gauge is already running while the shop buttons are visible.
+2. The end screen should show only the CTA, no other gameplay info.
+
+------------------
+
+Great, one last thing - make sure that our stack and plan will work great on mobile too
