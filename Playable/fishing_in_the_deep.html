@@ -32,6 +32,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
   font-size: clamp(16px, 4vw, 24px); color: #FFD700; font-weight: 700;
   border: 2px solid rgba(255,215,0,0.3);
   transition: transform 0.2s;
+  z-index: 150;
 }
 #coin-counter .coin-icon {
   width: clamp(20px, 5vw, 30px); height: clamp(20px, 5vw, 30px);
@@ -797,7 +798,7 @@ function setState(ns) {
     case S.REEL: break;
     case S.SUMMARY:
       sumFish = (hookGroup.userData.caughtFish || []).slice();
-      sumStep = 0; sumTimer = 0; sumTotal = 0; sumCounterTarget = 0; sumCounterVal = 0;
+      sumStep = 0; sumTimer = 0; sumTotal = 0; sumCounterTarget = 0; sumCounterVal = 0; sumCoinsAdded = 0;
       showCoin();
       const ov = $('summary-overlay'); ov.innerHTML = ''; ov.style.display = 'flex';
       for (const f of sumFish) {
@@ -838,29 +839,31 @@ function moveCaught() {
 function spawnFlyingCoins(fromEl, count) {
   const rect = fromEl.getBoundingClientRect();
   const coinRect = $('coin-counter').getBoundingClientRect();
+  const endX = coinRect.left + coinRect.width / 2;
+  const endY = coinRect.top + coinRect.height / 2;
   for (let i = 0; i < count; i++) {
     const coin = document.createElement('div');
     coin.className = 'flying-coin';
     coin.textContent = '🪙';
     const startX = rect.left + rect.width / 2 + (Math.random() - 0.5) * 30;
     const startY = rect.top + rect.height / 2;
-    const endX = coinRect.left + coinRect.width / 2;
-    const endY = coinRect.top + coinRect.height / 2;
     coin.style.left = startX + 'px';
     coin.style.top = startY + 'px';
     document.getElementById('hud').appendChild(coin);
-    const delay = i * 60;
+    // Force reflow so the browser paints the start position before transitioning
+    coin.offsetWidth;
+    const stagger = i * 80;
     setTimeout(() => {
-      coin.style.transition = 'left 0.5s ease-in, top 0.5s ease-in, opacity 0.5s ease-in';
+      coin.style.transition = 'left 0.55s ease-in, top 0.55s ease-in';
       coin.style.left = endX + 'px';
       coin.style.top = endY + 'px';
-      setTimeout(() => { coin.style.opacity = '0'; }, 350);
-      setTimeout(() => coin.remove(), 600);
-    }, delay);
+      setTimeout(() => { coin.style.opacity = '0'; coin.style.transition = 'opacity 0.2s'; }, 450);
+      setTimeout(() => coin.remove(), 700);
+    }, stagger);
   }
 }
 
-let sumCounterTarget = 0, sumCounterVal = 0;
+let sumCounterTarget = 0, sumCounterVal = 0, sumCoinsAdded = 0;
 
 function updateSummary(dt) {
   sumTimer += dt;
@@ -885,18 +888,30 @@ function updateSummary(dt) {
       tel.classList.add('show');
       sumCounterTarget = sumTotal;
       sumCounterVal = 0;
-      player.coins += sumTotal;
+      sumCoinsAdded = 0;
+      // Spawn flying coins from total line to coin counter
+      setTimeout(() => {
+        if (tel) spawnFlyingCoins(tel, Math.min(8, Math.max(3, Math.ceil(sumTotal / 20))));
+      }, 200);
     }
-    // Animate the counter
+    // Animate the counter — tick up over ~1.2 seconds
     if (tel && tel.classList.contains('show') && sumCounterVal < sumCounterTarget) {
-      const speed = Math.max(1, Math.ceil(sumCounterTarget / 30)); // count up over ~30 frames
+      const speed = Math.max(1, Math.ceil(sumCounterTarget / 70));
+      const prev = sumCounterVal;
       sumCounterVal = Math.min(sumCounterVal + speed, sumCounterTarget);
       tel.textContent = 'Total: +' + sumCounterVal + '🪙';
+      // Add coins to player incrementally and update coin counter each frame
+      const coinDelta = sumCounterVal - sumCoinsAdded;
+      if (coinDelta > 0) {
+        player.coins += coinDelta;
+        sumCoinsAdded = sumCounterVal;
+        updCoins();
+      }
       if (sumCounterVal >= sumCounterTarget) {
-        updCoins(); bumpCoins();
+        bumpCoins();
       }
     }
-    if (sumTimer > sumFish.length * delay + 2.5) {
+    if (sumTimer > sumFish.length * delay + 3.0) {
       $('summary-overlay').style.display = 'none';
       (hookGroup.userData.caughtFish || []).forEach(f => scene.remove(f.mesh));
       activeFish.forEach(f => scene.remove(f.mesh)); activeFish = [];
