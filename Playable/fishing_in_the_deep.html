@@ -169,11 +169,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 /* Flying coin */
 .flying-coin {
   position: absolute; pointer-events: none; font-size: 18px; z-index: 200;
-  animation: flyCoin 0.6s ease-in forwards;
-}
-@keyframes flyCoin {
-  0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; }
+  opacity: 1;
 }
 
 /* ── End Screen ── */
@@ -273,11 +269,12 @@ const FISH_TYPES = [
 ];
 const RARITY_COLORS = { "Rare!":"#DA70D6", "Amazing!":"#FFD700", "Legendary!":"#FF4500" };
 
-const HOOK_SPEED = 3;
+const HOOK_SPEED = 5;
 const CATCH_RADIUS = 0.8;
 const PLAY_AREA_X = 2.5;
 const FISH_SPAWN_MULT = 3;
 const DRAG_SENSITIVITY = 1.8;
+const DEPTH_SCALE = 2;
 
 // ═══════════════════════════════════════════════════════
 // §1b  AUDIO
@@ -339,7 +336,7 @@ renderer.setClearColor(0x0a1628);
 document.body.insertBefore(renderer.domElement, document.getElementById('hud'));
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x051530, 0.02);
+scene.fog = new THREE.FogExp2(0x051530, 0.012);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 1, 8);
@@ -351,20 +348,20 @@ dirLight.position.set(2, 5, 5);
 scene.add(dirLight);
 
 // Ocean background
-const bgGeo = new THREE.PlaneGeometry(30, 120, 1, 40);
+const bgGeo = new THREE.PlaneGeometry(30, 200, 1, 60);
 const bgColArr = [];
 const bgPos = bgGeo.getAttribute('position');
 for (let i = 0; i < bgPos.count; i++) {
-  const t = THREE.MathUtils.clamp((bgPos.getY(i) + 60) / 120, 0, 1);
+  const t = THREE.MathUtils.clamp((bgPos.getY(i) + 100) / 200, 0, 1);
   bgColArr.push(
-    THREE.MathUtils.lerp(0.02, 0.2, t),
-    THREE.MathUtils.lerp(0.06, 0.5, t),
-    THREE.MathUtils.lerp(0.15, 0.8, t)
+    THREE.MathUtils.lerp(0.01, 0.2, t),
+    THREE.MathUtils.lerp(0.03, 0.5, t),
+    THREE.MathUtils.lerp(0.10, 0.8, t)
   );
 }
 bgGeo.setAttribute('color', new THREE.Float32BufferAttribute(bgColArr, 3));
 const bgMesh = new THREE.Mesh(bgGeo, new THREE.MeshBasicMaterial({ vertexColors: true }));
-bgMesh.position.set(0, -25, -5);
+bgMesh.position.set(0, -50, -5);
 scene.add(bgMesh);
 
 // Surface band
@@ -385,7 +382,7 @@ for (let d = 5; d <= 35; d += 5) {
   cx.textAlign = 'center';
   cx.fillText(d + 'm', 64, 34);
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
-  sp.position.set(-PLAY_AREA_X - 1.5, -d, -2);
+  sp.position.set(-PLAY_AREA_X - 1.5, -d * DEPTH_SCALE, -2);
   sp.scale.set(2, 0.75, 1);
   scene.add(sp);
 }
@@ -397,7 +394,7 @@ const bubblePos = new Float32Array(BUBBLE_COUNT * 3);
 const bubbleSpeeds = new Float32Array(BUBBLE_COUNT);
 for (let i = 0; i < BUBBLE_COUNT; i++) {
   bubblePos[i*3]   = (Math.random() - 0.5) * 12;
-  bubblePos[i*3+1] = -Math.random() * 40;
+  bubblePos[i*3+1] = -Math.random() * 80;
   bubblePos[i*3+2] = -2 + Math.random() * 4;
   bubbleSpeeds[i]  = 0.2 + Math.random() * 0.5;
 }
@@ -412,7 +409,7 @@ function updateBubbles(dt) {
     pos.array[i*3+1] += bubbleSpeeds[i] * dt;
     pos.array[i*3]   += Math.sin(gameTime * 2 + i) * 0.003;
     if (pos.array[i*3+1] > 2) {
-      pos.array[i*3+1] = -35 - Math.random() * 5;
+      pos.array[i*3+1] = -70 - Math.random() * 10;
       pos.array[i*3]   = (Math.random() - 0.5) * 12;
     }
   }
@@ -579,10 +576,10 @@ function spawnFish(targetDepth) {
     const mesh = createFishMesh(chosen);
     const x = (Math.random() - 0.5) * PLAY_AREA_X * 2;
     const dir = Math.random() > 0.5 ? 1 : -1;
-    mesh.position.set(x, -depth, (Math.random() - 0.5) * 1.5);
+    mesh.position.set(x, -depth * DEPTH_SCALE, (Math.random() - 0.5) * 1.5);
     mesh.scale.x *= dir;
     scene.add(mesh);
-    activeFish.push({ type: chosen, mesh, x, y: -depth, vx: (0.3 + Math.random() * 0.5) * dir, dir, caught: false, bob: Math.random() * Math.PI * 2 });
+    activeFish.push({ type: chosen, mesh, x, y: -depth * DEPTH_SCALE, vx: (0.3 + Math.random() * 0.5) * dir, dir, caught: false, bob: Math.random() * Math.PI * 2 });
   }
 }
 
@@ -615,6 +612,8 @@ function checkCatches() {
       f.caught = true;
       caught.push(f);
       updateFishCounter(caught.length);
+      playSound('catch', 0.5);
+      spawnCatchParticles(f.mesh.position, f.type.color);
       spawnFloatText('+' + f.type.value + '🪙', '#FFD700', f.mesh.position);
       if (f.type.rarity) {
         cameraShake = f.type.id === 'legendary' ? 1.0 : 0.3;
@@ -760,6 +759,7 @@ $('upgrade-depth').addEventListener('pointerdown', () => {
 $('play-btn').addEventListener('pointerdown', () => {
   if (state !== S.READY) return;
   gauge.stopped = true;
+  playSound('rod', 0.6);
   hookGroup.userData.targetDepth = gaugeDepth();
   hookGroup.userData.caughtFish = [];
   setState(S.DESCENDING);
@@ -797,7 +797,7 @@ function setState(ns) {
     case S.REEL: break;
     case S.SUMMARY:
       sumFish = (hookGroup.userData.caughtFish || []).slice();
-      sumStep = 0; sumTimer = 0; sumTotal = 0;
+      sumStep = 0; sumTimer = 0; sumTotal = 0; sumCounterTarget = 0; sumCounterVal = 0;
       showCoin();
       const ov = $('summary-overlay'); ov.innerHTML = ''; ov.style.display = 'flex';
       for (const f of sumFish) {
@@ -835,6 +835,33 @@ function moveCaught() {
   }
 }
 
+function spawnFlyingCoins(fromEl, count) {
+  const rect = fromEl.getBoundingClientRect();
+  const coinRect = $('coin-counter').getBoundingClientRect();
+  for (let i = 0; i < count; i++) {
+    const coin = document.createElement('div');
+    coin.className = 'flying-coin';
+    coin.textContent = '🪙';
+    const startX = rect.left + rect.width / 2 + (Math.random() - 0.5) * 30;
+    const startY = rect.top + rect.height / 2;
+    const endX = coinRect.left + coinRect.width / 2;
+    const endY = coinRect.top + coinRect.height / 2;
+    coin.style.left = startX + 'px';
+    coin.style.top = startY + 'px';
+    document.getElementById('hud').appendChild(coin);
+    const delay = i * 60;
+    setTimeout(() => {
+      coin.style.transition = 'left 0.5s ease-in, top 0.5s ease-in, opacity 0.5s ease-in';
+      coin.style.left = endX + 'px';
+      coin.style.top = endY + 'px';
+      setTimeout(() => { coin.style.opacity = '0'; }, 350);
+      setTimeout(() => coin.remove(), 600);
+    }, delay);
+  }
+}
+
+let sumCounterTarget = 0, sumCounterVal = 0;
+
 function updateSummary(dt) {
   sumTimer += dt;
   const revs = document.querySelectorAll('#summary-overlay .fish-reveal');
@@ -843,14 +870,31 @@ function updateSummary(dt) {
     if (sumTimer >= sumStep * delay + 0.3) {
       revs[sumStep].classList.add('show');
       sumTotal += sumFish[sumStep].type.value;
+      // Coin burst from each revealed fish
+      const idx = sumStep;
+      setTimeout(() => {
+        const el = revs[idx];
+        if (el) spawnFlyingCoins(el, Math.min(5, Math.ceil(sumFish[idx].type.value / 10)));
+      }, 300);
+      playSound('catch', 0.3);
       sumStep++;
     }
   } else {
     const tel = $('sum-total');
     if (tel && !tel.classList.contains('show')) {
-      tel.textContent = 'Total: +' + sumTotal + '🪙'; tel.classList.add('show');
+      tel.classList.add('show');
+      sumCounterTarget = sumTotal;
+      sumCounterVal = 0;
       player.coins += sumTotal;
-      setTimeout(() => { updCoins(); bumpCoins(); }, 400);
+    }
+    // Animate the counter
+    if (tel && tel.classList.contains('show') && sumCounterVal < sumCounterTarget) {
+      const speed = Math.max(1, Math.ceil(sumCounterTarget / 30)); // count up over ~30 frames
+      sumCounterVal = Math.min(sumCounterVal + speed, sumCounterTarget);
+      tel.textContent = 'Total: +' + sumCounterVal + '🪙';
+      if (sumCounterVal >= sumCounterTarget) {
+        updCoins(); bumpCoins();
+      }
     }
     if (sumTimer > sumFish.length * delay + 2.5) {
       $('summary-overlay').style.display = 'none';
@@ -868,6 +912,7 @@ let reachedBottom = false;
 function update(dt) {
   gameTime += dt; stateTimer += dt;
   updateBubbles(dt);
+  updateParticles(dt);
 
   switch (state) {
     case S.READY:
@@ -877,7 +922,7 @@ function update(dt) {
       break;
 
     case S.DESCENDING: {
-      const tgt = -hookGroup.userData.targetDepth;
+      const tgt = -hookGroup.userData.targetDepth * DEPTH_SCALE;
       if (!reachedBottom) {
         hookGroup.position.y -= HOOK_SPEED * dt;
         // Slight sway while descending
