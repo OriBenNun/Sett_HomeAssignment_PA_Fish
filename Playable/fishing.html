@@ -20,7 +20,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(180deg, #87CEEB 0%, #4a9fd8 100%); }
+html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(180deg, #3bb8f5 0%, #1a7fcf 100%); }
 
 #c {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -48,7 +48,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 }
 #coin-display .coin-icon {
   width: 34px; height: 34px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffe066, #cc9900);
+  background: radial-gradient(circle at 35% 35%, #ffe840, #e6a000);
   border: 2px solid #aa7700; flex-shrink: 0;
   box-shadow: 0 2px 6px rgba(255,215,0,0.4);
 }
@@ -100,7 +100,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 #upgrades.hidden { opacity: 0; pointer-events: none !important; max-height: 0; margin-bottom: 0; overflow: hidden; }
 .upgrade-btn {
   font-family: var(--ui-font); font-weight: 700; font-size: 18px;
-  color: #fff; background: rgba(0,60,100,0.7); border: 2px solid rgba(255,255,255,0.2);
+  color: #fff; background: rgba(0,70,160,0.8); border: 2px solid rgba(100,180,255,0.35);
   border-radius: 14px; padding: 12px 16px; cursor: pointer;
   text-align: center; min-width: 140px; min-height: 56px;
   flex: 1; max-width: 180px;
@@ -120,7 +120,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 }
 .upgrade-btn .cost .mini-coin {
   width: 14px; height: 14px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffe066, #cc9900);
+  background: radial-gradient(circle at 35% 35%, #ffe840, #e6a000);
   border: 1px solid #aa7700; display: inline-block;
 }
 .upgrade-btn .level { font-size: 11px; opacity: 0.7; margin-top: 3px; }
@@ -141,7 +141,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 /* Play button */
 #play-btn {
   font-family: var(--display-font); font-size: 24px; color: #fff;
-  background: linear-gradient(135deg, #ff6b35, #ff3366);
+  background: linear-gradient(135deg, #ff8800, #ff0055);
   border: none; border-radius: 50px; padding: 16px 52px;
   cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
   box-shadow: 0 6px 20px rgba(255,51,102,0.5), 0 2px 8px rgba(0,0,0,0.3);
@@ -222,15 +222,15 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 .float-label {
   position: fixed; pointer-events: none; z-index: 15;
   font-family: var(--display-font); font-weight: 700;
-  animation: popFloat 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  text-shadow: 0 1px 0 #000, 0 2px 6px rgba(0,0,0,0.9), 0 0 16px rgba(0,0,0,0.7);
-  -webkit-text-stroke: 0.5px rgba(0,0,0,0.6);
+  animation: popFloat 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  text-shadow: 0 2px 0 #000, 0 3px 8px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8);
+  -webkit-text-stroke: 1px rgba(0,0,0,0.8);
   white-space: nowrap;
 }
 .attaboy-label {
   position: fixed; pointer-events: none; z-index: 16;
   font-family: var(--display-font); text-transform: uppercase;
-  animation: attaboy 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: attaboy 2.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   text-shadow: 0 3px 15px rgba(0,0,0,0.6);
   white-space: nowrap;
 }
@@ -239,7 +239,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 .fly-coin {
   position: fixed; pointer-events: none; z-index: 14;
   width: 20px; height: 20px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffe066, #cc9900);
+  background: radial-gradient(circle at 35% 35%, #ffe840, #e6a000);
   border: 2px solid #aa7700;
   box-shadow: 0 2px 8px rgba(255,215,0,0.5);
 }
@@ -277,9 +277,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 }
 @keyframes popFloat {
   0% { opacity: 1; transform: translate(-50%, 0) scale(0.5); }
-  30% { transform: translate(-50%, -15px) scale(1.3); }
-  60% { transform: translate(-50%, -30px) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -60px) scale(0.9); }
+  20% { transform: translate(-50%, -20px) scale(1.5); }
+  50% { opacity: 1; transform: translate(-50%, -45px) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -90px) scale(0.9); }
 }
 @keyframes attaboy {
   0% { opacity: 1; transform: translate(-50%, -50%) scale(0); }
@@ -320,7 +320,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 
     <div id="controls">
       <div id="gauge-wrap">
-        <svg id="gauge-svg" viewBox="0 0 200 110">
+        <svg id="gauge-svg" viewBox="-12 0 224 115">
           <defs>
             <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stop-color="#e74c3c"/>
@@ -336,9 +336,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
             <polygon points="100,22 95,105 105,105" fill="#fff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.4))"/>
             <circle cx="100" cy="100" r="8" fill="#fff" stroke="rgba(0,0,0,0.2)" stroke-width="2"/>
           </g>
-          <text x="10" y="112" font-family="Nunito" font-size="14" fill="rgba(255,255,255,0.65)" font-weight="700">MIN</text>
-          <text x="155" y="112" font-family="Nunito" font-size="14" fill="rgba(255,255,255,0.65)" font-weight="700">MIN</text>
-          <text x="80" y="18" font-family="Nunito" font-size="14" fill="rgba(255,255,255,0.85)" font-weight="700">MAX</text>
+          <text x="-4" y="100" font-family="Nunito" font-size="13" fill="rgba(255,255,255,0.85)" font-weight="700" text-anchor="start">MIN</text>
+          <text x="204" y="100" font-family="Nunito" font-size="13" fill="rgba(255,255,255,0.85)" font-weight="700" text-anchor="end">MIN</text>
+          <text x="100" y="12" font-family="Nunito" font-size="13" fill="rgba(255,255,255,1.0)" font-weight="700" text-anchor="middle">MAX</text>
         </svg>
       </div>
       <button id="play-btn">CAST!</button>
@@ -468,13 +468,13 @@ const SceneMgr = {
 
   init() {
     const canvas = document.getElementById('c');
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setClearColor(0x87CEEB);
+    this.renderer.setPixelRatio(1);
+    this.renderer.setClearColor(0x3bb8f5);
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x87CEEB, 0.015);
+    this.scene.fog = new THREE.FogExp2(0x3bb8f5, 0.012);
 
     this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
     this.camera.position.set(0, 2, 8);
@@ -516,14 +516,14 @@ const SceneMgr = {
   },
 
   buildWater() {
-    const geo = new THREE.PlaneGeometry(60, 60, 64, 64);
+    const geo = new THREE.PlaneGeometry(60, 60, 8, 8);
     const mat = new THREE.ShaderMaterial({
       transparent: true,
       side: THREE.DoubleSide,
       uniforms: {
         uTime: { value: 0 },
-        uColor1: { value: new THREE.Color(0x1E90FF) },
-        uColor2: { value: new THREE.Color(0x006bb5) }
+        uColor1: { value: new THREE.Color(0x00b8a9) },
+        uColor2: { value: new THREE.Color(0x005f7a) }
       },
       vertexShader: `
         uniform float uTime;
@@ -541,7 +541,7 @@ const SceneMgr = {
         varying vec2 vUv;
         void main() {
           vec3 col = mix(uColor1, uColor2, vUv.y);
-          gl_FragColor = vec4(col, 0.7);
+          gl_FragColor = vec4(col, 1.0);
         }
       `
     });
@@ -556,7 +556,7 @@ const SceneMgr = {
     // Hull
     const hull = new THREE.Mesh(
       new THREE.BoxGeometry(2.5, 0.5, 1.2),
-      new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.8 })
+      new THREE.MeshStandardMaterial({ color: 0x8b4a1a, roughness: 0.7 })
     );
     hull.position.y = 0.15;
     boatGroup.add(hull);
@@ -564,7 +564,7 @@ const SceneMgr = {
     // Cabin accent
     const cabin = new THREE.Mesh(
       new THREE.BoxGeometry(0.8, 0.4, 0.8),
-      new THREE.MeshStandardMaterial({ color: 0x7a4e2a, roughness: 0.7 })
+      new THREE.MeshStandardMaterial({ color: 0xb06030, roughness: 0.6 })
     );
     cabin.position.set(-0.5, 0.55, 0);
     boatGroup.add(cabin);
@@ -579,7 +579,7 @@ const SceneMgr = {
 
     // Fisherman head
     const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.2, 12, 8),
+      new THREE.SphereGeometry(0.2, 5, 4),
       new THREE.MeshStandardMaterial({ color: 0xf0c8a0 })
     );
     head.position.set(0.3, 1.35, 0);
@@ -587,7 +587,7 @@ const SceneMgr = {
 
     // Hat
     const hat = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.25, 0.28, 0.15, 12),
+      new THREE.CylinderGeometry(0.25, 0.28, 0.15, 6),
       new THREE.MeshStandardMaterial({ color: 0x8B4513 })
     );
     hat.position.set(0.3, 1.52, 0);
@@ -607,7 +607,7 @@ const SceneMgr = {
 
   buildHook() {
     // Hook
-    const hookGeo = new THREE.TorusGeometry(0.12, 0.03, 8, 16, Math.PI);
+    const hookGeo = new THREE.BoxGeometry(0.08, 0.25, 0.08);
     const hookMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.1 });
     this.hookMesh = new THREE.Mesh(hookGeo, hookMat);
     this.hookMesh.position.set(0, 0, 0);
@@ -615,7 +615,7 @@ const SceneMgr = {
     this.scene.add(this.hookMesh);
 
     // Line — cylinder-based 3D line so it's always visible
-    const lineGeo = new THREE.CylinderGeometry(0.018, 0.018, 1, 6);
+    const lineGeo = new THREE.CylinderGeometry(0.022, 0.022, 1, 4);
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xcccccc });
     this.lineMesh = new THREE.Mesh(lineGeo, lineMat);
     this.scene.add(this.lineMesh);
@@ -637,11 +637,11 @@ const SceneMgr = {
 
     // Seaweed
     this.seaweeds = [];
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 8; i++) {
       const h = 1 + Math.random() * 2;
       const seg = new THREE.Mesh(
         new THREE.BoxGeometry(0.08, h, 0.08),
-        new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.3 + Math.random() * 0.1, 0.6, 0.2 + Math.random() * 0.15) })
+        new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.33 + Math.random() * 0.08, 1.0, 0.3 + Math.random() * 0.15) })
       );
       const sx = (Math.random() - 0.5) * 12;
       const sy = -(2 + Math.random() * 25);
@@ -652,9 +652,9 @@ const SceneMgr = {
     }
 
     // Rocks
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 6; i++) {
       const rock = new THREE.Mesh(
-        new THREE.SphereGeometry(0.3 + Math.random() * 0.5, 6, 5),
+        new THREE.SphereGeometry(0.3 + Math.random() * 0.5, 4, 3),
         new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.08, 0.15, 0.15 + Math.random() * 0.1), roughness: 0.95 })
       );
       rock.position.set((Math.random() - 0.5) * 14, -(3 + Math.random() * 25), (Math.random() - 0.5) * 4 - 2);
@@ -662,21 +662,8 @@ const SceneMgr = {
       this.scene.add(rock);
     }
 
-    // Bubble particles (3D)
+    // Bubbles removed for performance
     this.bubbles = [];
-    for (let i = 0; i < 30; i++) {
-      const bubble = new THREE.Mesh(
-        new THREE.SphereGeometry(0.03 + Math.random() * 0.05, 6, 6),
-        new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.3 + Math.random() * 0.3 })
-      );
-      bubble.position.set(
-        (Math.random() - 0.5) * 10,
-        -(Math.random() * 30),
-        (Math.random() - 0.5) * 4
-      );
-      this.scene.add(bubble);
-      this.bubbles.push({ mesh: bubble, speed: 0.3 + Math.random() * 0.5, baseX: bubble.position.x });
-    }
   },
 
   getRodTip() {
@@ -884,11 +871,11 @@ const FishSys = {
   pool: [],
 
   rarityTable: [
-    { rarity: 'common',    weight: 55, minDepth: 0,  valueMin: 5,   valueMax: 15,  label: null,        color: 0x8899aa },
-    { rarity: 'uncommon',  weight: 25, minDepth: 5,  valueMin: 20,  valueMax: 40,  label: null,        color: 0x2ecc71 },
-    { rarity: 'rare',      weight: 12, minDepth: 10, valueMin: 60,  valueMax: 100, label: 'RARE!',     color: 0xe67e22 },
-    { rarity: 'amazing',   weight: 6,  minDepth: 15, valueMin: 150, valueMax: 250, label: 'AMAZING!',  color: 0xf1c40f },
-    { rarity: 'legendary', weight: 2,  minDepth: 20, valueMin: 400, valueMax: 600, label: 'LEGENDARY!',color: 0xe74c3c }
+    { rarity: 'common',    weight: 55, minDepth: 0,  valueMin: 5,   valueMax: 15,  label: null,        color: 0x44aaff },
+    { rarity: 'uncommon',  weight: 25, minDepth: 5,  valueMin: 20,  valueMax: 40,  label: null,        color: 0x00ee55 },
+    { rarity: 'rare',      weight: 12, minDepth: 10, valueMin: 60,  valueMax: 100, label: 'RARE!',     color: 0xff6600 },
+    { rarity: 'amazing',   weight: 6,  minDepth: 15, valueMin: 150, valueMax: 250, label: 'AMAZING!',  color: 0xffdd00 },
+    { rarity: 'legendary', weight: 2,  minDepth: 20, valueMin: 400, valueMax: 600, label: 'LEGENDARY!',color: 0xff1122 }
   ],
 
   rollRarity(selectedDepth) {
@@ -930,38 +917,38 @@ const FishSys = {
       group.add(body, tail);
     } else if (r === 'rare') {
       const body = new THREE.Mesh(
-        new THREE.SphereGeometry(0.2, 10, 8),
+        new THREE.BoxGeometry(0.4, 0.24, 0.16),
         new THREE.MeshStandardMaterial({ color: rarityInfo.color, emissive: 0x331100, emissiveIntensity: 0.3 })
       );
       const tail = new THREE.Mesh(
-        new THREE.ConeGeometry(0.15, 0.35, 6),
+        new THREE.ConeGeometry(0.15, 0.35, 3),
         new THREE.MeshStandardMaterial({ color: rarityInfo.color })
       );
       tail.position.x = -0.32; tail.rotation.z = Math.PI / 2;
       group.add(body, tail);
     } else if (r === 'amazing') {
       const body = new THREE.Mesh(
-        new THREE.SphereGeometry(0.22, 12, 10),
+        new THREE.BoxGeometry(0.44, 0.28, 0.18),
         new THREE.MeshStandardMaterial({ color: rarityInfo.color, emissive: 0x443300, emissiveIntensity: 0.5 })
       );
       const tail = new THREE.Mesh(
-        new THREE.ConeGeometry(0.17, 0.35, 6),
+        new THREE.ConeGeometry(0.17, 0.35, 3),
         new THREE.MeshStandardMaterial({ color: rarityInfo.color })
       );
       tail.position.x = -0.35; tail.rotation.z = Math.PI / 2;
       const halo = new THREE.Mesh(
-        new THREE.RingGeometry(0.3, 0.35, 24),
+        new THREE.RingGeometry(0.3, 0.38, 8),
         new THREE.MeshBasicMaterial({ color: 0xf1c40f, side: THREE.DoubleSide, transparent: true, opacity: 0.6 })
       );
       group.add(body, tail, halo);
       group.userData.halo = halo;
     } else { // legendary
       const body = new THREE.Mesh(
-        new THREE.SphereGeometry(0.28, 14, 12),
+        new THREE.BoxGeometry(0.55, 0.36, 0.24),
         new THREE.MeshStandardMaterial({ color: 0xff4444, emissive: 0x440000, emissiveIntensity: 0.6 })
       );
       const tail = new THREE.Mesh(
-        new THREE.ConeGeometry(0.2, 0.4, 8),
+        new THREE.ConeGeometry(0.2, 0.4, 4),
         new THREE.MeshStandardMaterial({ color: 0xff6644 })
       );
       tail.position.x = -0.42; tail.rotation.z = Math.PI / 2;
@@ -996,7 +983,7 @@ const FishSys = {
     this.clearAll();
     const depth = GS.selectedDepth;
     // Spawn more fish than maxFish to give variety
-    const count = GS.maxFish + Math.floor(GS.maxFish * 0.8) + 3;
+    const count = GS.maxFish * 3 + 12; // dense pool with lots of tease fish
 
     for (let i = 0; i < count; i++) {
       const rarityInfo = this.rollRarity(depth);
@@ -1004,10 +991,9 @@ const FishSys = {
 
       const fx = (Math.random() - 0.5) * 6;
       const fz = 0;
-      // Fish spawn across a wider vertical range — deeper ones are visual teasers
-      // 60% of fish are within catchable range, 40% are tease fish below
-      const isTease = Math.random() < 0.40;
-      const visualDepth = isTease ? depth + 10 + Math.random() * 5 : depth;
+      // Fish spawn across a wide vertical range — lots of tease fish below
+      const isTease = Math.random() < 0.60;
+      const visualDepth = isTease ? depth + 12 + Math.random() * 20 : depth;
       let fy;
       if (rarityInfo.minDepth > 0) {
         fy = -(rarityInfo.minDepth + Math.random() * (visualDepth - rarityInfo.minDepth));
@@ -1111,7 +1097,7 @@ const FishSys = {
 
     // Bouncy coin value popup at catch
     const catchColor = f.rarity === 'legendary' ? '#ff6666' : f.rarity === 'amazing' ? '#ffe040' : f.rarity === 'rare' ? '#ff9944' : '#ffe566';
-    const catchSize = f.rarity === 'legendary' ? 36 : f.rarity === 'amazing' ? 30 : f.rarity === 'rare' ? 26 : 22;
+    const catchSize = f.rarity === 'legendary' ? 46 : f.rarity === 'amazing' ? 38 : f.rarity === 'rare' ? 32 : 26;
     UIMgr.showFloatLabel(`+${f.value}`, screenPos.x, screenPos.y - 10, catchColor, catchSize);
 
     // Label popup
@@ -1143,7 +1129,7 @@ const FishSys = {
 const VFX = {
   canvas: null, ctx: null,
   particles: [],
-  maxParticles: 300,
+  maxParticles: 400,
 
   init() {
     this.canvas = document.getElementById('vfx');
@@ -1189,18 +1175,18 @@ const VFX = {
 
   emitCatch(x, y, rarity) {
     const configs = {
-      common:    { count: 8,  color: '#ffffff', speed: 80, life: 0.5, radius: 2 },
-      uncommon:  { count: 12, color: '#2ecc71', speed: 100, life: 0.6, radius: 3 },
-      rare:      { count: 20, color: '#e67e22', speed: 130, life: 0.7, radius: 3.5 },
-      amazing:   { count: 35, color: '#f1c40f', speed: 160, life: 0.8, radius: 4 },
-      legendary: { count: 60, color: '#ff4444', speed: 200, life: 1.0, radius: 5 }
+      common:    { count: 6,  color: '#88ddff', speed: 80, life: 0.5, radius: 2 },
+      uncommon:  { count: 6,  color: '#00ff66', speed: 100, life: 0.6, radius: 3 },
+      rare:      { count: 8,  color: '#ff6600', speed: 130, life: 0.7, radius: 3.5 },
+      amazing:   { count: 10, color: '#ffee00', speed: 160, life: 0.8, radius: 4 },
+      legendary: { count: 14, color: '#ff1122', speed: 200, life: 1.0, radius: 5 }
     };
     const c = configs[rarity] || configs.common;
     this.emit(x, y, c.count, c);
   },
 
   emitCoins(x, y, count) {
-    this.emit(x, y, count || 15, { color: '#ffd700', speed: 120, life: 0.7, radius: 3.5, gravity: 100 });
+    this.emit(x, y, count || 22, { color: '#ffdd00', speed: 140, life: 0.9, radius: 4.5, gravity: 90 });
   },
 
   tick(dt) {
@@ -1294,7 +1280,7 @@ const UIMgr = {
     el.style.cssText = `left:${x}px; top:${y - 40}px; font-size:${rarity === 'legendary' ? 36 : 28}px; color:${colorMap[rarity] || '#fff'};`;
     el.textContent = text;
     document.getElementById('ui').appendChild(el);
-    setTimeout(() => el.remove(), 1200);
+    setTimeout(() => el.remove(), 2000);
   },
 
   showFloatLabel(text, x, y, color, size) {
@@ -1303,7 +1289,7 @@ const UIMgr = {
     el.style.cssText = `left:${x}px; top:${y}px; font-size:${size || 22}px; color:${color || '#ffd700'};`;
     el.textContent = text;
     document.getElementById('ui').appendChild(el);
-    setTimeout(() => el.remove(), 800);
+    setTimeout(() => el.remove(), 1800);
   },
 
   flyCoinsToCounter(fromX, fromY, count) {
@@ -1483,11 +1469,11 @@ const UIMgr = {
         mesh.scale.set(1.0, 1.0, 1.0);
 
         // Coin burst VFX
-        VFX.emitCoins(sp.x, sp.y, 14);
+        VFX.emitCoins(sp.x, sp.y, 20);
 
         // Value label
         const labelColor = f.rarity === 'legendary' ? '#ff6666' : f.rarity === 'amazing' ? '#ffe040' : f.rarity === 'rare' ? '#ff9944' : '#ffe566';
-        const labelSize = f.rarity === 'legendary' ? 38 : f.rarity === 'amazing' ? 32 : f.rarity === 'rare' ? 28 : 24;
+        const labelSize = f.rarity === 'legendary' ? 48 : f.rarity === 'amazing' ? 40 : f.rarity === 'rare' ? 34 : 28;
         UIMgr.showFloatLabel(`+${f.value}`, sp.x, sp.y - 20, labelColor, labelSize);
 
         // Attaboy for rarity (shown immediately with the value)
@@ -1523,7 +1509,7 @@ const UIMgr = {
       // Fly coins from summary label to counter
       await sleep(200);
       const totalRect = totalEl.getBoundingClientRect();
-      this.flyCoinsToCounter(totalRect.left + totalRect.width/2, totalRect.top, Math.min(Math.ceil(totalCoins / 8), 12));
+      this.flyCoinsToCounter(totalRect.left + totalRect.width/2, totalRect.top, Math.min(Math.ceil(totalCoins / 5), 16));
 
       // Animate counter ticking up while coins fly
       await sleep(250);
@@ -1683,6 +1669,24 @@ function init() {
     window.addEventListener('pointerdown', playMusicOnce, { once: true });
     window.addEventListener('touchstart', playMusicOnce, { once: true });
   }
+
+  // Pause/resume music on tab visibility change
+  document.addEventListener('visibilitychange', () => {
+    if (!AudioMgr._musicAudio) return;
+    if (document.hidden) {
+      AudioMgr._musicAudio.pause();
+    } else {
+      AudioMgr._musicAudio.play().catch(() => {});
+    }
+  });
+
+  // Also handle window blur/focus
+  window.addEventListener('blur', () => {
+    if (AudioMgr._musicAudio) AudioMgr._musicAudio.pause();
+  });
+  window.addEventListener('focus', () => {
+    if (AudioMgr._musicAudio && !document.hidden) AudioMgr._musicAudio.play().catch(() => {});
+  });
 }
 
 // Start on load

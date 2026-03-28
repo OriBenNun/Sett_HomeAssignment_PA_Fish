@@ -272,5 +272,25 @@ All 13 checks pass. Copying to outputs.Here's what was changed across all 8 item
 
 
 
+1\. Simplify all geometry to plain primitives as the game lags a bit currently while the ascending happens. 
+
+2\. I want more fish below the min depth, and more fish in general. 
+
+3\. make all popup text bigger, stay for longer, and brighter
+
+4\. Make everything more saturated
+
+5\. Make the sky color distinctly different than the sea color
+
+6\. The "MIN" and "MAX" labels are still overlapping with the gauge
+
+7\. make the BG music stop when the page is unfocused.
+
+8\. less sparkle particles and more coin particles (if not too heavy)
+
+
+
+12:16 AM
+
 
 
