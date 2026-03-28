@@ -1,0 +1,10 @@
+Your task:
+		Read the PRD carefully and produce a fully detailed technical plan describing how to implement the playable in a single HTML file. The plan should follow the PRD very strictly; you may add non-mentioned features only if they are trivial. This is not an actual playable ad, so no need to deal with ads and 3rd parties, but it should 100% look and feel like a PA.
+The plan should include:
+		1.  Core systems and architecture.
+		2.  Gameplay flow.
+		3.  Entities and data.
+4. VFX, SFX and particles
+5. 3D visual approach
+		6.  Step by step implementation plan.
+Output format: single, clear Markdown document (up to 3 pages)

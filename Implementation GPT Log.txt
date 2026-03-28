@@ -1,0 +1,20 @@
+Implement this playable ad as a single HTML file. Follow the implementation plan as closely as possible.
+
+5:02 PM
+
+
+I'll build this full playable ad step by step. This is a substantial Three.js game — let me implement it all in one HTML file.Here's the complete playable ad implemented as a single HTML file. Everything from the plan is in there:
+
+**Full phase machine**: IDLE → CASTING → DESCENDING → PAUSED → ASCENDING → SURFACING → SUMMARY → END, with round 1 tutorial tooltip and 3-round progression.
+
+**3D scene**: Three.js with animated water surface, rising bubbles, depth-based fog/color shift, fisherman at surface, hook with fishing line, and procedurally built fish (body + tail + eye) colored by species.
+
+**Core gameplay**: Pendulum gauge for depth selection, hook descent with camera tracking, lateral drag input (mouse + touch) during ascent, AABB collision detection, fish attachment to hook, speed boost at max catch.
+
+**Economy**: 6 fish types with depth-tier spawning and weighted rarity, two upgrade paths (max catch & max depth) with the exact cost tables from the plan, coin counter with flash animation.
+
+**VFX**: Catch popups with rarity labels and glow, 3D coin burst particles with gravity, flying coins to UI counter, camera shake on rare catches, fish bounce on surfacing.
+
+**Audio**: All Web Audio API synth sounds — needle tick, cast splash, catch chords (pitch scales with value), rarity arpeggios, coin collect, surface splash, summary fanfare.
+
+Give it a cast and let me know what needs tuning!

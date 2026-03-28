@@ -1,0 +1,25 @@
+Your task:
+		Read the PRD carefully and produce a fully detailed technical plan describing how to implement the playable in a single HTML file. The plan should follow the PRD very strictly; you may add non-mentioned features only if they are trivial. This is not an actual playable ad, so no need to deal with ads and 3rd parties, but it should 100% look and feel like a PA.
+The plan should include:
+		1.  Core systems and architecture.
+		2.  Gameplay flow.
+		3.  Entities and data.
+1. VFX, SFX and particles
+2. 3D visual approach
+		6.  Step by step implementation plan.
+Output format: single, clear Markdown document (up to 3 pages)
+
+4:51 PM
+
+
+The plan is complete. Here's a quick orientation of the key decisions:
+
+**Three.js over Canvas 2D** — The PRD explicitly calls for 3D, and Three.js via CDN keeps everything in a single file. All geometry is primitives (spheres, boxes, cylinders, cones) — no assets, no loading.
+
+**Phase Machine as the spine** — `IDLE → CASTING → DESCENDING → PAUSED → ASCENDING → SURFACING → SUMMARY → IDLE` drives everything. Every module only activates in its relevant phases, which keeps the complexity manageable.
+
+**DOM over canvas for UI** — Coin counters, gauges, upgrade buttons, and popups are all DOM elements layered over the canvas. This makes the slot-machine counter animation, coin-fly-to-counter, and upgrade button states trivial to implement correctly with CSS.
+
+**Web Audio API for all sound** — Zero audio files. All SFX are synthesized with `OscillatorNode` and `AudioBufferSourceNode` (white noise). This keeps the file truly self-contained.
+
+**Overspawn fish** — Spawning ~2.5× `maxFish` fish ensures the player always has enough targets to fill their hook, even with imperfect aiming. Only the first `maxFish` collisions register.
