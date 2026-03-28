@@ -1,0 +1,104 @@
+# Model: Claude Opus 4.6 Extended
+
+
+
+Implement this playable ad as a single HTML file. Follow the implementation plan as closely as possible. Take as much time as needed to make it as production-ready as possible on the first iteration.
+
+
+
+10:05 PM
+
+
+
+
+
+Now let me read the frontend-design skill for guidance on building this.This is a substantial build. Let me implement the full playable ad following the technical plan closely.Let me review the file for any issues and polish it before delivering.I see several issues to fix. Let me make targeted improvements:Now let me add underwater decorations (seaweed, rocks, bubbles) and fix gauge speed for better feel:Now let me add a depth indicator and polish the overall experience:Now let me copy the final file to outputs and present it:
+
+
+
+\--------------
+
+
+
+Continue
+
+
+
+10:15 PM
+
+
+
+
+
+Here's the complete 1,622-line playable ad, implementing the full technical plan. Here's what's in there:
+
+
+
+\*\*Full FSM:\*\* IDLE → HOOK\_DESCENDING → HOOK\_PAUSED → HOOK\_ASCENDING → SURFACE\_SUMMARY → ROUND\_RESET (×3) → END\_SCREEN — all transitions wired up with proper onEnter/onExit callbacks.
+
+
+
+\*\*3D Scene (Three.js r128):\*\* Boat with fisherman, fishing rod + dynamic line, hook mesh, animated water plane (custom shader with sine-wave displacement), exponential fog, seaweed (swaying), rocks, and rising bubble particles for underwater atmosphere.
+
+
+
+\*\*Gauge System:\*\* Sine-wave pendulum with natural ease at extremes, speed escalates each round (2.2 → 2.6 → 3.0 rad/s). Center = max depth (green), edges = shallow (red). Depth selection shown as a float label on cast.
+
+
+
+\*\*Fish System:\*\* Weighted rarity rolls (common 55% → legendary 2%) with depth-bias enforcement. Five distinct mesh styles with increasing visual flair — legendary gets a hue-shifting emissive + point light. Idle swim animations, per-fish eye details.
+
+
+
+\*\*Catch + VFX:\*\* Particle bursts scale with rarity (8 → 60 particles), screen-edge flash (rare), screen shake (amazing), full-screen white flash (legendary). Attaboy labels with spring-scale animation. Coin-fly particles during summary.
+
+
+
+\*\*Audio:\*\* Fully synthesized via Web Audio API — no external files needed. Catch blip (pitch-shifted per rarity), rod-use whoosh, coin jingle, ambient underwater pad.
+
+
+
+\*\*UI:\*\* Coin/fish counter crossfade, fill bar with spring easing, upgrade buttons with cost/level display, tutorial toast on round 1, depth indicator during descent, end screen with pulsing CTA.
+
+
+
+\*\*Polish:\*\* Responsive resize, pointer drag for horizontal hook movement, delta-time capped at 100ms, mobile touch support via pointer events, 0-fish edge case handled.
+
+
+
+\------------------
+
+
+
+Make sure all the clickable elements are spaced correctly and don't overlap (high margins)
+
+
+
+10:18 PM
+
+
+
+
+
+Let me review the current layout and fix all spacing issues.I see the core issue — `#controls` and `#upgrades` are both `position: absolute; bottom: 0`, so they stack right on top of each other. Let me restructure the entire bottom area into a single flex column with proper spacing.Now update the CSS to match the new structure:Now update the JS to reference the new structure — hide/show `#bottom-area` as the container:Now update the init function:Now let me fix the end screen button spacing and ensure the coin/fish counter at top has safe margins:Now fix the top-area counters to have safe area margin for mobile notches:Now let me also ensure touch targets are at minimum 48px (mobile accessibility) and add `touch-action: manipulation` to prevent zoom delays:Let me do a final visual sanity check on the overall layout by reviewing the full CSS:Good — the layout is clean now. Let me verify the HTML structure is correct:Structure is clean. Let me copy the final version:
+
+
+
+Here's the updated file with all spacing fixes. Here's what changed:
+
+
+
+\*\*Layout restructure:\*\* The upgrade buttons and gauge/play button were both `position: absolute; bottom: 0` — stacking directly on top of each other. They're now inside a single `#bottom-area` flex column, with upgrades above the gauge+CAST button, separated by a 20px margin.
+
+
+
+\*\*Touch targets:\*\* All interactive elements now have `min-height: 56px` (upgrade buttons, play button) or `min-height: 64px` (CTA), exceeding the 48px mobile accessibility minimum. Added `touch-action: manipulation` everywhere to eliminate 300ms tap delay on mobile.
+
+
+
+\*\*Safe area insets:\*\* Top counters use `max(20px, env(safe-area-inset-top))` and the bottom area uses `max(24px, env(safe-area-inset-bottom))` to avoid notches, home indicators, and rounded corners on modern phones.
+
+
+
+\*\*Responsive sizing:\*\* End screen title and CTA button use `clamp()` for font sizes. Gap between end-screen elements increased to 40px with 24px horizontal padding.
+
