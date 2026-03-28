@@ -1,0 +1,1 @@
+Implement this playable ad as a single HTML file. Follow the implementation plan as closely as possible. Take as much time as needed to make it as production-ready as possible on the first iteration. [Attached only the generated MD file]
