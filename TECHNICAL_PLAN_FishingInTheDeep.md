@@ -1,247 +1,349 @@
 # Fishing In The Deep — Technical Implementation Plan
-### Single-File HTML Playable Ad
+**Format:** Single HTML file · **Renderer:** Three.js (inline CDN) · **Target:** Playable Ad (PA)
 
 ---
 
 ## 1. Core Systems & Architecture
 
-The entire game runs in **one self-contained HTML file** with no external dependencies. All rendering is done via **Three.js** (loaded from CDN), all UI is DOM/CSS overlaid on top of the canvas.
+### Single-File Structure
+```
+index.html
+ ├── <head>  — CDN imports: Three.js r160, GSAP 3, Howler.js
+ ├── <style> — All CSS (UI layers, HUD, overlays, animations)
+ └── <body>
+      ├── #canvas-container   — Three.js WebGL canvas (3D world)
+      ├── #ui-layer           — All HTML/CSS HUD overlays (pointer-events: none on canvas)
+      └── <script>            — All JS: engine, systems, state machine
+```
 
-### Module Breakdown
+### State Machine (Central Controller)
+Single `GameState` object drives everything. States are mutually exclusive; transitions call `onExit` / `onEnter` hooks.
 
-| Module | Responsibility |
+```
+IDLE → CASTING → DESCENDING → HOLDING → ASCENDING → SURFACING → SUMMARY → (ROUND_RESET | ENDSCREEN)
+```
+
+| State | Description |
 |---|---|
-| `GameState` | Single source of truth (coins, round, upgrades, phase) |
-| `SceneManager` | Three.js scene, camera, renderer, lighting |
-| `HookController` | Hook descent/ascent, lateral drag input |
-| `FishSpawner` | Procedural fish placement across depth layers |
-| `CollisionSystem` | AABB overlap between hook and fish hitboxes |
-| `UIController` | All DOM overlays: counters, gauge, buttons, panels |
-| `VFXManager` | Particles, coin bursts, popups, fish jump animation |
-| `AudioManager` | Web Audio API: synth sounds, no audio assets needed |
-| `UpgradeSystem` | Validates and applies upgrades; persists state |
-| `GameLoop` | `requestAnimationFrame` tick dispatching to all modules |
+| `IDLE` | Upgrade shop + gauge pendulum active. Play button visible. |
+| `CASTING` | Player pressed Play. Gauge locked. Depth calculated. Hook begins descent. HUD swaps coin→fish counter. |
+| `DESCENDING` | Camera follows hook down. Fish entities pre-spawned at random positions. |
+| `HOLDING` | Hook paused at target depth. Round 1 only: tutorial tooltip shown for 2 s, then fades. |
+| `ASCENDING` | Player drags hook L/R. Collision detection active. Fish caught → hooked + animated. |
+| `SURFACING` | Max fish reached or hook crosses y=0. Hook + catch rises quickly. HUD swaps fish→coin counter. |
+| `SUMMARY` | Fish jump animation → value pop-ups → coin burst per fish → total counter → coin fly to HUD. |
+| `ROUND_RESET` | Reset hook/camera, re-show Play button. Round counter (hidden from player) incremented. |
+| `ENDSCREEN` | After round 3 summary: full-screen CTA overlay. |
 
-### Data Flow
-
-```
-Player Input → UIController → GameState mutation
-GameState → SceneManager / HookController / VFXManager (reactive update each tick)
-CollisionSystem → FishSpawner (mark caught) → VFXManager (trigger effect) → GameState (update counter)
-```
+### Key Modules
+- **GaugeSystem** — pendulum animation, depth calculation, UI rendering
+- **CameraSystem** — follow-hook descent/ascent, lerp-based smooth tracking
+- **FishSystem** — spawn, collision, catch, rarity, animation state
+- **UpgradeSystem** — state, cost table, button enable/disable logic
+- **HUDSystem** — counter swap logic, fish fill-bar, coin display
+- **VFXSystem** — particles, DOM pop-ups, coin burst, fish jump at surface
+- **AudioSystem** — Howler.js wrapper: play, stop, volume per event
 
 ---
 
 ## 2. Gameplay Flow
 
-### Phase Machine
+### Round Loop (×3)
 
 ```
-IDLE → CASTING → DESCENDING → PAUSED → ASCENDING → SURFACING → SUMMARY → IDLE (next round)
+[IDLE]
+  Pendulum swings on gauge ←→
+  Player optionally buys upgrades (coins permitting)
+  Player clicks PLAY
+      ↓
+[CASTING]
+  Gauge pointer freezes → depth = lerp(minDepth, maxDepth, gaugeNormalized)
+  HUD: coin counter fades out → fish counter fades in (starts 0/N, fill bar empty)
+  Hook starts descending
+      ↓
+[DESCENDING]
+  Camera follows hook (smooth lerp, slight lag = juicy feel)
+  Fish pre-spawned at randomized (x, depth) — rarer fish deeper
+  Hook reaches targetDepth
+      ↓
+[HOLDING]
+  Hook idles (bob animation)
+  Round 1 only: tutorial text "Drag the hook to catch fish!" — 2 s, fade out
+  0.5–1 s pause (2 s on round 1), then transition
+      ↓
+[ASCENDING]
+  Hook moves up at constant speed
+  Player drags mouse/touch left/right → hook follows on X axis (clamped)
+  Collision check: hook hitbox vs fish hitbox each frame
+  On catch:
+    Fish snaps to hook (parent transform)
+    Catch VFX plays at fish position
+    "+$VALUE" coin pop-up bounces in
+    Rarity title pops if applicable
+    Fish counter increments, fill bar updates
+  If fishCount == maxFish → hook.ascendFast = true (no more collision)
+      ↓
+[SURFACING]
+  Hook crosses y = 0 (surface line)
+  HUD: fish counter fades out → coin counter fades in
+  Camera smoothly returns to surface framing
+      ↓
+[SUMMARY]
+  Caught fish detach from hook, line up on surface, jump animation (staggered, GSAP)
+  Per fish (staggered 0.3 s delay each):
+    Value text pops in with bounce
+    Rarity label if applicable
+    Coin burst particle effect
+  After all fish resolved:
+    Total earnings shown ("+ $XXX") with count-up tween
+    Coins fly from total → HUD coin counter (arc trajectory, CSS/GSAP)
+    Coin counter ticks up
+      ↓
+[ROUND_RESET or ENDSCREEN]
+  If round < 3 → reset scene, show Play button (IDLE)
+  If round == 3 → ENDSCREEN
 ```
 
-**IDLE** — Lobby screen. Upgrade panel + Play button visible. Gauge needle animates (pendulum, ease-in-out). Coin counter shown.
-
-**CASTING** — Player clicks Play. Needle freezes. Depth = lerp(minDepth, maxDepth, needleNorm). Coin counter swaps to fish counter (0 / maxFish). Camera begins following hook.
-
-**DESCENDING** — Hook moves down at constant speed (~3–4 m/s). Camera tracks it. Fish are already pre-spawned but invisible until camera reveals them.
-
-**PAUSED** — Hook reaches target depth. Holds 0.5–1 s (Round 1: 2 s). Round 1 only: tutorial tooltip "Move the hook to catch fish!" fades in then out.
-
-**ASCENDING** — Hook moves upward at base speed. Player drags left/right (mouse/touch). Collision detection active. Fish attach to hook visually. At maxFish caught: speed multiplies ×2.5, collision disabled.
-
-**SURFACING** — Hook passes y=0 (surface). Fish counter swaps back to coin counter. Hook+fish enter jump/bounce animation above water.
-
-**SUMMARY** — Per-fish value popups, coin burst VFX, rarity labels. Total coins tallied with counter spin. Coins fly to coin counter UI. Counter updates. After 3 rounds → END SCREEN; otherwise → IDLE.
-
-**END SCREEN** — Full-screen overlay showing total earnings, CTA button.
+### Gauge Mechanics (IDLE state)
+- **Shape:** Semi-circle arc rendered in HTML Canvas 2D (overlaid on the Play button area).
+- **Color zones:** Left/right ends = red ("shallow"), center = green ("deep"). Gradient sweep: `red → yellow → green → yellow → red`.
+- **Pointer:** A triangular SVG indicator mounted on a rotating arm from the arc center. Rotates from `−70°` to `+70°` (arc sweep).
+- **Pendulum motion:** GSAP `gsap.to()` with `ease: "sine.inOut"`, alternating between `−70°` and `+70°`. Base duration `1.4 s` per side. Speed increases very slightly each round (subtle pressure).
+- **Depth mapping:** `normalizedPos = (angle + 70) / 140`. `depth = minDepth + normalizedPos × (maxDepth − minDepth)`. Center (green) = maxDepth. Edges (red) = minDepth.
+- **On click:** GSAP `.kill()` on tween → pointer frozen → depth locked → state transitions to CASTING.
 
 ---
 
 ## 3. Entities & Data
 
-### GameState Object
+### Game Config (all tunable constants)
+```js
+const CONFIG = {
+  rounds: 3,
+  startCoins: 100,
+  gauge: { minAngle: -70, maxAngle: 70, swingDuration: 1.4 },
+  depth: { startMax: 5, minOffset: 2 },  // minDepth = maxDepth - 2
+  fish: { startMax: 6 },
+  upgrades: {
+    maxFish: [
+      { value: 7,  cost: 50  },
+      { value: 8,  cost: 100 },
+      { value: 9,  cost: 200 },
+      { value: 10, cost: 400 },
+    ],
+    maxDepth: [
+      { value: 10, cost: 50  },
+      { value: 15, cost: 75  },
+      { value: 20, cost: 150 },
+      { value: 30, cost: 300 },
+    ],
+  },
+};
+```
+
+### Fish Rarity Table
+| Rarity | Depth Range | Spawn Weight | Coin Value | Label | VFX Tier |
+|---|---|---|---|---|---|
+| Common | Any | 50% | 5–15 | — | Tier 1 |
+| Uncommon | ≥ 40% depth | 28% | 20–40 | — | Tier 1 |
+| Rare | ≥ 60% depth | 14% | 50–80 | "Rare!" | Tier 2 |
+| Epic | ≥ 80% depth | 6% | 100–150 | "Amazing!" | Tier 2 |
+| Legendary | ≥ 90% depth | 2% | 200–350 | "Legendary!" | Tier 3 |
+
+Rarity weights re-rolled per fish. Fish spawned with `depth × rarityBias` so going deeper materially improves the catch pool.
+
+### Fish Entity
 ```js
 {
-  coins: 100,
-  round: 1,             // 1–3
-  phase: 'IDLE',
-  maxFish: 6,           // upgrade: 6→7→8→9→10
-  maxDepth: 5,          // upgrade: 5→10→15→20→30 (meters)
-  currentFishCount: 0,
-  caughtFish: [],       // array of FishData
-  selectedDepth: 0,     // determined at cast
-  needleNorm: 0,        // 0..1 pendulum position
+  mesh: THREE.Mesh,        // Basic 3D shape (see §5)
+  rarity: 'common'|...,
+  coinValue: Number,
+  depth: Number,           // Y position in world units
+  xPos: Number,            // Random X within swim lane
+  swimPhase: Number,       // For idle bobbing animation
+  caught: Boolean,
+  hooked: Boolean,
 }
 ```
 
-### Upgrade Tables
-```js
-MAX_FISH_UPGRADES = [
-  { fish: 7,  cost: 50  },
-  { fish: 8,  cost: 100 },
-  { fish: 9,  cost: 200 },
-  { fish: 10, cost: 400 },
-]
-
-MAX_DEPTH_UPGRADES = [
-  { depth: 10, cost: 50  },
-  { depth: 15, cost: 75  },
-  { depth: 20, cost: 150 },
-  { depth: 30, cost: 300 },
-]
-```
-
-### Fish Types (by depth tier)
-```js
-FISH_TYPES = [
-  { id:'sardine',   minDepth:0,  maxDepth:30, value:5,   color:0x88ccee, size:0.3, rarity:null       },
-  { id:'bass',      minDepth:0,  maxDepth:30, value:12,  color:0x4488aa, size:0.45, rarity:null      },
-  { id:'tuna',      minDepth:5,  maxDepth:30, value:30,  color:0x226688, size:0.6, rarity:'Rare!'    },
-  { id:'swordfish', minDepth:10, maxDepth:30, value:75,  color:0x113355, size:0.8, rarity:'Amazing!' },
-  { id:'anglerfish',minDepth:15, maxDepth:30, value:150, color:0x221133, size:0.7, rarity:'Legendary!'},
-  { id:'oarfish',   minDepth:20, maxDepth:30, value:300, color:0xaa3322, size:1.1, rarity:'JACKPOT!' },
-]
-```
-
-Each fish is spawned with `{ type, worldPos:{x,y,z}, caught:false, mesh, hitbox }`.
-
 ### Hook Entity
 ```js
-{ mesh, lineGeometry, worldPos, velocity, lateralPos, caughtFish:[] }
+{
+  mesh: THREE.Group,       // Line + hook shape
+  targetX: Number,         // Updated by player drag
+  depth: Number,           // Current Y world position
+  speed: Number,           // Descent/ascent speed
+  ascendFast: Boolean,
+  caughtFish: Fish[],
+}
+```
+
+### Player State
+```js
+{
+  coins: Number,
+  round: Number,           // 1–3, hidden from player
+  maxFish: Number,
+  maxDepth: Number,
+  fishUpgradeLevel: Number,  // 0–4
+  depthUpgradeLevel: Number, // 0–4
+}
 ```
 
 ---
 
 ## 4. VFX, SFX & Particles
 
-### VFX (CSS + Three.js)
+### VFX Tiers
+| Tier | Used For | Elements |
+|---|---|---|
+| **Tier 1** | Common/Uncommon catch | Small CSS particle burst (8 dots, 0.4 s), small "+$N" pop-up, quick scale punch on fish |
+| **Tier 2** | Rare/Epic catch | Larger particle burst (16 dots), ripple ring SVG expand, larger bouncy "+$N" with glow, label badge drops in from top |
+| **Tier 3** | Legendary catch | Full screen edge flash (brief white vignette), massive particle burst (32 dots), screen shake (GSAP `x` jitter on canvas container), huge glowing "+$N", "LEGENDARY!" badge with shimmer animation |
 
-| Effect | Implementation |
-|---|---|
-| Fish catch popup | DOM `div` absolutely positioned at fish screen coords, CSS keyframe: scale 0→1.3→1, fade out upward |
-| Rarity label | Same popup with gold/purple glow shadow; stacked below value |
-| Coin burst | Three.js `Points` system — 12–20 gold particles ejected radially from fish, arc downward with gravity |
-| Hook speed trail | Three.js `Line` trailing the hook, fading alpha over 8 frames |
-| Water surface | Animated sine-wave displacement on a flat `PlaneGeometry` shader; ripple on hook entry/exit |
-| Fish jump anim | CSS `@keyframes` translateY bounce (3 bounces, ease-out) on summary phase |
-| Coins fly to UI | DOM coin `div`s animated via JS `animate()` API from fish position to coin counter DOM rect |
-| Counter spin | CSS digit-slot scroll animation on coin counter number |
+### Particle System (CSS-based, no canvas)
+- DOM `<div>` particles created on demand, appended to `#vfx-layer`, auto-removed after animation.
+- Each particle: random angle, random distance, random size variant.
+- CSS `@keyframes`: `transform: translate + scale → 0`, `opacity: 1 → 0`.
+- Color palette per rarity: Common=teal, Uncommon=blue, Rare=purple, Epic=orange, Legendary=gold+white.
 
-### SFX (Web Audio API — zero assets)
+### Coin Burst (Summary Phase)
+- Per fish: spawn 8–16 coin divs (`🪙` emoji or gold circle div) at fish position.
+- GSAP arc tween: each coin moves to HUD coin counter position over 0.8–1.2 s.
+- Stagger across fish catches by 0.3 s.
+- HUD coin counter does a "punch" scale animation each time coins arrive.
 
-| Event | Sound Synthesis |
-|---|---|
-| Needle tick | Short `OscillatorNode` sine 880Hz, 50ms |
-| Cast / plunge | White noise burst + low-pass filter sweep down |
-| Fish caught | Sine chord (root + 5th), 200ms, pitch varies by fish value |
-| Rarity catch | Arpeggiated chord + reverb (convolver with impulse response) |
-| Coin collect | High-pitched sine 1200Hz with fast decay |
-| Hook surface splash | Noise burst + bandpass 400Hz |
-| Summary fanfare | Short 3-note ascending synth melody |
+### Surface Jump Animation
+- GSAP timeline per caught fish: `y: -80px → 0 → -40px → 0` with `bounce` ease.
+- Fish meshes converted to CSS-positioned overlays for this phase (simpler to animate than Three.js).
+
+### Screen Shake (Legendary only)
+```js
+gsap.to('#canvas-container', { x: '+=6', yoyo: true, repeat: 7, duration: 0.05, ease: 'none' });
+```
+
+### Audio (Howler.js)
+All files provided externally. Keys and trigger points:
+
+| Audio Key | File | Trigger |
+|---|---|---|
+| `splash_cast` | splash_cast.mp3 | Hook enters water (CASTING start) |
+| `hook_descend` | hook_descend.mp3 | Loop during DESCENDING |
+| `hook_ascend` | hook_ascend.mp3 | Loop during ASCENDING |
+| `fish_catch_common` | catch_common.mp3 | Common/Uncommon fish caught |
+| `fish_catch_rare` | catch_rare.mp3 | Rare/Epic fish caught |
+| `fish_catch_legendary` | catch_legendary.mp3 | Legendary fish caught |
+| `surface_splash` | surface.mp3 | Hook breaks surface |
+| `coin_pop` | coin_pop.mp3 | Each fish value pops in summary |
+| `coin_fly` | coin_fly.mp3 | Coins fly to HUD counter |
+| `upgrade_buy` | upgrade_buy.mp3 | Upgrade purchased |
+| `gauge_tick` | gauge_tick.mp3 | Play button clicked / gauge locked |
+| `bg_music` | bg_music.mp3 | Looping ambient, plays throughout |
 
 ---
 
-## 5. 3D Visual Approach
+## 5. 3D Visual Approach (Three.js, No Real Assets)
 
-**Renderer:** Three.js WebGL, `antialias: true`, tone mapping `ACESFilmic`.
+### Scene Setup
+- **Renderer:** `THREE.WebGLRenderer({ antialias: true, alpha: true })`, fills container.
+- **Camera:** `THREE.PerspectiveCamera(60°)`, positioned at `(0, 2, 10)`, looking toward `(0, -2, 0)`.
+- **Lighting:** 1× `AmbientLight` (soft warm, 0.6 intensity) + 1× `DirectionalLight` (top-right, cast shadows off for perf).
+- **World orientation:** Y-up. Surface at `y = 0`. Ocean floor at `y = -maxDepth`.
 
-**Camera:** `PerspectiveCamera` (FOV 60), positioned at `(0, 2, 10)` in lobby. During descent/ascent it smoothly tracks the hook's Y with a small lag (`lerp` factor 0.08) and a fixed X offset to keep the hook slightly left-of-center.
+### Environment
+- **Sky/surface:** A wide flat `PlaneGeometry` at `y = 0.1`, semi-transparent `MeshBasicMaterial` with blue tint — represents the water surface seen from above.
+- **Underwater background:** Gradient `CanvasTexture` applied to a back-plane (`PlaneGeometry` behind everything): dark navy at top → near-black at bottom. Parallax-scrolls slightly as camera descends.
+- **Depth fog:** `scene.fog = new THREE.FogExp2(0x001133, 0.04)` — naturally hides far depth, adds atmosphere.
+- **Floating particles:** 40× tiny `SphereGeometry(0.05)` white dots drifting upward slowly (bubbles). `userData.speed` randomized.
 
-**Scene Geometry (primitive-only, no external assets):**
+### Fisherman (Surface, Static)
+- Body: `BoxGeometry(0.6, 1.2, 0.4)` — muted brown.
+- Head: `SphereGeometry(0.3)` — skin tone.
+- Hat: `CylinderGeometry(0.15, 0.35, 0.3)` stacked on head.
+- Arm: `BoxGeometry(0.15, 0.7, 0.15)` angled forward holding rod.
+- Rod: `CylinderGeometry(0.03, 0.03, 2.5)` thin, angled up.
+- Fishing line: `THREE.Line` with `LineBasicMaterial`, stretches dynamically from rod tip to hook position each frame.
 
-- **Hook:** `TorusGeometry` (small arc) + `CylinderGeometry` for the shank, merged. Silver `MeshStandardMaterial`.
-- **Line:** Dynamic `BufferGeometry` `Line` from hook to top of frame, updated every tick.
-- **Fish:** `SphereGeometry` flattened (scaleY 0.5) + `ConeGeometry` tail, grouped. Each species has a distinct `color` and `emissive` glow at depth.
-- **Fisherman:** `BoxGeometry` body, `SphereGeometry` head, `CylinderGeometry` rod — static at top, partially clipped by frame top edge.
-- **Water surface:** `PlaneGeometry` (20×20, 40 segments) with animated vertex Y displacement via `ShaderMaterial`. Semi-transparent blue.
-- **Underwater background:** Gradient fog (`scene.fog = new THREE.FogExp2`) in deep blue. Scattered `SphereGeometry` bubble particles drifting up slowly.
-- **Depth layers:** Subtle color temperature shift of `scene.background` as hook descends (surface: light cyan → deep: near-black indigo).
+### Hook
+- Pole end: `SphereGeometry(0.08)` (junction point).
+- Hook body: `TorusGeometry(0.15, 0.03, 8, 16, Math.PI)` — half-torus, rotated to hang downward in classic hook shape.
+- All grouped: `THREE.Group`. X position updated by player input; Y updated by descent/ascent.
 
-**Lighting:**
-- `DirectionalLight` (sun, above-water warm) fades out as hook descends.
-- `PointLight` on the hook — cool blue, intensity increases with depth.
-- `AmbientLight` constant low-level.
+### Fish Shapes (vary by rarity for quick visual read)
+| Rarity | Shape | Color |
+|---|---|---|
+| Common | `SphereGeometry(0.3)` + small tail `ConeGeometry` | Grey-blue |
+| Uncommon | `CapsuleGeometry(0.25, 0.4)` + tail | Teal |
+| Rare | Elongated `SphereGeometry` scaled `(1.6, 1, 1)` + fin box | Vivid purple |
+| Epic | Same as Rare + `emissive` orange glow | Orange-gold |
+| Legendary | Same + large `PointLight` child (glow aura), animated scale pulse | Bright gold, shimmering |
+
+Fish idle animation: `mesh.position.x += Math.sin(time + swimPhase) * 0.01` each frame — gentle swimming sway.
 
 ---
 
 ## 6. Step-by-Step Implementation Plan
 
-### Step 1 — HTML Shell & Boilerplate
-- Single `index.html` with inline `<style>` and `<script>`.
-- Import Three.js from `unpkg.com` CDN via `<script type="module">`.
-- `<canvas id="game">` fills 100vw/100vh.
-- `<div id="ui">` absolutely positioned over canvas — holds all DOM UI layers.
+### Step 1 — HTML Skeleton & Layers
+- Create `index.html` with `<canvas>` fill + `#ui-layer` div (absolute, pointer-events passthrough on canvas).
+- Import Three.js, GSAP, Howler via CDN `<script>` tags in `<head>`.
+- Define all CSS variables: colors, fonts (use a display font like `Bangers` for labels, `Nunito` for UI via Google Fonts).
+- Build static DOM structure: `#hud`, `#gauge-container`, `#play-btn`, `#upgrade-panel`, `#fish-counter`, `#coin-counter`, `#vfx-layer`, `#endscreen`.
 
-### Step 2 — Three.js Scene Setup
-- Init `WebGLRenderer`, `Scene`, `PerspectiveCamera`, `AnimationLoop`.
-- Add water plane, fog, ambient + directional lights.
-- Build fisherman geometry and fix it at top of scene.
+### Step 2 — Three.js Scene Foundation
+- Init renderer, scene, camera, lights, fog.
+- Build and position fisherman group at surface.
+- Build underwater background plane + bubble particles.
+- Add `window.addEventListener('resize', onResize)` — renderer and camera aspect update.
+- Implement `animate()` loop: `requestAnimationFrame` + bubble drift + fish idle sway.
 
-### Step 3 — GameState & Phase Machine
-- Implement `GameState` object and `setPhase(phase)` function.
-- `setPhase` drives all module transitions (show/hide UI, start/stop animations).
+### Step 3 — Gauge System
+- Draw semi-circle arc on `<canvas id="gauge-canvas">` using `ctx.arc()`.
+- Fill arc with `createLinearGradient`: red → yellow → green → yellow → red.
+- Overlay SVG pointer (`<div id="gauge-pointer">`) absolutely positioned, `transform-origin: bottom center`.
+- GSAP pendulum: `gsap.to('#gauge-pointer', { rotation: 70, duration: 1.4, ease:'sine.inOut', yoyo:true, repeat:-1 })`.
+- `#play-btn` click handler: kill tween, read rotation, calculate `normalizedPos`, store `targetDepth`, call `startCasting()`.
 
-### Step 4 — Gauge & Cast System
-- DOM overlay: semicircular SVG gauge + animated needle (CSS `@keyframes` pendulum, `animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1)`).
-- On Play click: freeze needle, compute `selectedDepth`, call `setPhase('CASTING')`.
+### Step 4 — State Machine & Game Loop
+- Implement `setState(newState)`: sets `currentState`, calls `states[newState].enter()`.
+- Implement each state's `enter()`, `update(delta)`, `exit()` as plain objects.
+- Wire `animate()` loop to call `states[currentState].update(delta)` each frame.
 
-### Step 5 — Upgrade UI
-- Two upgrade panels as DOM elements.
-- Each button reads `GameState.coins`; disabled + greyed if insufficient.
-- On purchase: deduct coins, update `maxFish`/`maxDepth`, re-render button states.
+### Step 5 — Descending & Camera System
+- In `DESCENDING.update`: `hook.position.y -= speed * delta`. Camera `y` lerps toward `hook.position.y + offset`. Line geometry updated (`setFromPoints`).
+- Spawn fish entities: for each of `maxFish` slots, roll rarity (depth-weighted), set random `x ∈ [-3, 3]` and `y ∈ [-minDepth, -targetDepth]` distributed evenly with jitter.
 
-### Step 6 — Fish Spawner
-- On `CASTING`, call `spawnFish(selectedDepth, maxFish * 2.5)` — overspawn so player has targets.
-- Place fish at random `(x: -3..3, y: -1..-selectedDepth, z: -1..1)` filtered by depth tier.
-- Create Three.js mesh per fish, add to scene.
+### Step 6 — Ascending & Input
+- Mouse/touch `mousemove` / `touchmove` → map X to world X (via `raycaster` or simpler: `(clientX / window.innerWidth - 0.5) * 6`) → `hook.targetX`.
+- In `ASCENDING.update`: `hook.position.x = lerp(hook.position.x, hook.targetX, 0.15)`. `hook.position.y += ascentSpeed * delta`.
+- Collision: per un-caught fish, `distanceSq(hook, fish) < threshold²` → `catchFish(fish)`.
+- `catchFish`: mark caught, parent fish to hook group, play catch SFX + VFX tier, update HUD.
+- If `caughtFish.length >= maxFish`: set `ascendFast = true`, boost speed, skip collision checks.
 
-### Step 7 — Hook Descent
-- In `DESCENDING` phase: each tick move hook `y -= speed * delta`.
-- Update line geometry endpoints.
-- Camera Y lerps to hook Y.
-- On reaching `selectedDepth`: store pause timer → `PAUSED`.
+### Step 7 — HUD Systems
+- **Coin counter:** CSS `position:fixed top-left`, animated number using `gsap.to({val:current}, {val:target, onUpdate})`.
+- **Fish counter:** Replace coin counter div (crossfade via GSAP `opacity` tween). Fill bar: `width: (caught/maxFish * 100)%`, CSS transition.
+- **Counter swap:** Fade-out coin → fade-in fish on CASTING enter. Reverse on SURFACING enter.
 
-### Step 8 — Tutorial Tooltip (Round 1)
-- In `PAUSED`, if `round === 1`: show DOM tooltip div with fade-in CSS, auto-dismiss after 1.5 s, then resume.
+### Step 8 — Upgrade Panel
+- Two buttons per upgrade (Fish, Depth), each showing current level, next cost.
+- On click: check `coins >= cost`, deduct, level up, update CONFIG live values, play `upgrade_buy` SFX, disable button if max level reached.
+- Disable all upgrade buttons during non-IDLE states.
 
-### Step 9 — Hook Ascent & Drag Input
-- `ASCENDING`: hook Y increases each tick.
-- Mouse/touch `mousemove`/`touchmove`: map screen X to world X (`-3..3`), lerp hook X.
-- Each tick: run collision check — for each uncaught fish, test hook AABB overlap.
-- On collision: `catchFish(fish)` → mark caught, attach mesh to hook group, trigger VFX popup, update counter.
-- If `caughtFish.length >= maxFish`: boost speed, disable collisions.
+### Step 9 — Summary & Coin Burst
+- SURFACING enter: camera lerps back to surface. Hook group stops.
+- SUMMARY enter: detach fish from hook, position them in a row above surface.
+- GSAP staggered timeline per fish: jump animation → value badge scales in → coin burst divs created → arc-fly to HUD counter via GSAP `motionPath` or manual bezier.
+- After all resolved: show total with count-up → grand coin fly → call `endRound()`.
 
-### Step 10 — Surface & Summary
-- When hook Y ≥ 0: `setPhase('SURFACING')`.
-- Swap fish counter DOM back to coin counter.
-- Trigger fish bounce CSS animation.
-- After bounce: iterate `caughtFish` — show value popup per fish, coin burst particles, rarity label.
-- After all popups: show total, animate coins flying to counter, update `GameState.coins`.
-- After 1.5 s: if `round < 3` → reset + `setPhase('IDLE')`; else `setPhase('END')`.
+### Step 10 — Round Reset & End Screen
+- `endRound()`: if `round < 3` → reset hook/fish/scene → `setState('IDLE')`. If `round == 3` → `setState('ENDSCREEN')`.
+- `ENDSCREEN`: full-screen overlay fades in. Shows only a large CTA button `"PLAY NOW"`. `onclick`: `window.open('', '_blank')`.
+- Hide `#gauge-container`, `#upgrade-panel`, `#play-btn` during end screen.
 
-### Step 11 — Round Reset
-- Remove all fish meshes from scene.
-- Reset hook position to surface.
-- Camera back to lobby position.
-- Clear `caughtFish`, reset `currentFishCount`.
-- Increment `round`.
-
-### Step 12 — VFX & Audio Polish
-- Implement `VFXManager.coinBurst(worldPos)` using Three.js `Points`.
-- Implement `VFXManager.floatLabel(text, screenPos, style)` for value/rarity popups.
-- Implement `AudioManager` with all synth sounds wired to game events.
-- Animate water surface vertices each tick via sine wave.
-
-### Step 13 — End Screen
-- Full-screen DOM overlay, semi-transparent dark background.
-- Display total coins earned across 3 rounds.
-- "Play Again" button → reset full `GameState`, `setPhase('IDLE')`.
-
-### Step 14 — Polish Pass
-- Ensure needle ease-in-out feels satisfying (tune cubic-bezier).
-- Confirm coin counter uses slot-machine scroll animation.
-- Verify all upgrade buttons disable/enable reactively.
-- Test on mobile: touch events for drag and tap.
-- Clamp hook X within world bounds during drag.
-- Add subtle screen shake (camera) on rarity catch.
+### Step 11 — Polish Pass
+- Tutorial tooltip (round 1 HOLDING): absolutely-positioned div, fade in → 2 s hold → fade out, CSS styled as underwater bubble caption.
+- Rarity labels on catch: DOM badge drops in from above fish, CSS `@keyframes dropIn`, auto-remove after 1.5 s.
+- Legendary screen shake: GSAP jitter on canvas container.
+- Ensure all audio loops (`hook_descend`, `hook_ascend`, `bg_music`) stop correctly on state exit.
+- Test full 3-round loop end-to-end. Tune GSAP durations for feel.

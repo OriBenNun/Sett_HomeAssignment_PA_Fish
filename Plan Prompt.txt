@@ -4,7 +4,14 @@ The plan should include:
 		1.  Core systems and architecture.
 		2.  Gameplay flow.
 		3.  Entities and data.
-4. VFX, SFX and particles
-5. 3D visual approach
+    4. VFX, SFX and particles
+    5. 3D visual approach
 		6.  Step by step implementation plan.
-Output format: single, clear Markdown document (up to 3 pages)
+
+Other important things to pay extra attention for while reading the PRD and to describe very specifically in the plan:
+1. How the gauge looks and works (semi-circle, going bad<->perfect<->bad, pendulum with ease movement, etc)
+2. The mentioned audio files are the only assets that we have for the PA, and will be provided along with the implementation plan.
+3. The end screen should only show a CTA which opens a blank new tab (for demonstration purposes).
+4. The round counter should be hidden.
+5. Rarer fish should feel much better visually and juice-wise.
+Output format: single, clear Markdown document (up to 5 pages)
