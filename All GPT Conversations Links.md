@@ -10,3 +10,5 @@ https://claude.ai/share/bbbe3af9-d25f-4dde-85c0-b2cd2974e67d
 https://claude.ai/share/24a94bcf-01cf-44c8-9e5e-730999b5e674
 https://claude.ai/share/4812edac-8e31-4a9e-af57-5ff440927b2d
 https://claude.ai/share/86a85271-5fa0-46c0-90f2-710f55c503b6
+https://claude.ai/share/c255d8fd-19eb-46fa-b4f6-998e3ef309fd
+https://claude.ai/share/7de69dd1-8aee-4f6e-9b43-41adb227744c
