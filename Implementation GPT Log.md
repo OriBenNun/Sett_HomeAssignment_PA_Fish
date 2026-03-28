@@ -323,3 +323,41 @@ All 5 changes applied:
 
 5\. Fish spawn before each round — FishSys.spawnPool() is now called with a 50ms delay whenever the game enters IDLE or ROUND\_RESET state, so fish are already swimming in the water when the player sees the PLAY button. Also added a floor of 1m to the spawn depth so fish always have vertical space at startup.
 
+
+
+\-------------
+
+
+
+# Started a new chat and changed model to: Claude Haiku 4.5 Extended
+
+
+
+Change the upgrades buttons to be docked to the right side of the screen as a column instead of a row, and then move the gauge and play button a bit up
+
+
+
+1:00 AM
+
+
+
+Done! I've made the following changes to your fishing game UI:
+
+
+
+\*\*Changes made:\*\*
+
+
+
+1\. \*\*Upgrade buttons\*\* — Changed from a horizontal row to a vertical column docked on the right side of the screen, with tighter spacing (16px gap instead of 28px)
+
+2\. \*\*Gauge \& Play button\*\* — Moved up to the vertical center of the screen
+
+3\. \*\*Button sizing\*\* — Adjusted slightly for the vertical layout to keep proportions balanced
+
+
+
+The upgrade buttons now stack vertically on the right side with `position: fixed`, and the controls are positioned at the screen's middle rather than the bottom. The layout should feel less cramped and give your gauge more prominence in the center of the screen.
+
+
+

@@ -39,7 +39,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 
 /* Coin counter */
 #coin-display {
-  position: absolute; top: max(16px, env(safe-area-inset-top, 16px)); left: 16px; transform: none;
+  position: absolute; top: max(32px, env(safe-area-inset-top, 16px)); left: 32px; transform: none;
   display: flex; align-items: center; gap: 8px;
   background: rgba(0,0,0,0.55); border-radius: 50px; padding: 16px 36px;
   transition: opacity 0.3s ease; font-size: 44px; font-weight: 800;
@@ -81,29 +81,32 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 
 /* Bottom area — single stacking context for all bottom UI */
 #bottom-area {
-  position: absolute; bottom: 0; left: 0; width: 100%;
+  position: absolute; bottom: auto; top: 50%; left: 50%; transform: translateX(-50%);
+  width: 100%;
   display: flex; flex-direction: column; align-items: center;
-  padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
+  padding-bottom: 0;
   pointer-events: none; /* children opt-in */
   transition: opacity 0.3s ease;
 }
 #bottom-area.hidden { opacity: 0; pointer-events: none !important; }
 #bottom-area > * { pointer-events: auto; }
 
-/* Upgrade buttons row — sits ABOVE gauge+play */
+/* Upgrade buttons column — docked right */
 #upgrades {
-  display: flex; justify-content: center; gap: 28px;
-  padding: 0 24px; margin-bottom: 36px;
-  width: 100%; max-width: 700px;
+  position: fixed; right: 10vw; bottom: 50%; max-height: calc(100vh - 48px);
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 72px;
+  padding: 0; margin: 0;
+  width: auto;
   transition: opacity 0.3s ease, max-height 0.3s ease;
+  z-index: 3;
 }
 #upgrades.hidden { opacity: 0; pointer-events: none !important; max-height: 0; margin-bottom: 0; overflow: hidden; }
 .upgrade-btn {
-  font-family: var(--ui-font); font-weight: 700; font-size: 30px;
+  font-family: var(--ui-font); font-weight: 700; font-size: 28px;
   color: #fff; background: rgba(0,70,160,0.8); border: 3px solid rgba(100,180,255,0.35);
-  border-radius: 22px; padding: 20px 24px; cursor: pointer;
-  text-align: center; min-width: 240px; min-height: 100px;
-  flex: 1; max-width: 320px;
+  border-radius: 22px; padding: 18px 20px; cursor: pointer;
+  text-align: center; min-width: 180px; min-height: 90px;
+  flex: 0 0 auto;
   transition: all 0.2s ease;
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   -webkit-tap-highlight-color: transparent;
@@ -336,9 +339,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
             <polygon points="100,22 95,105 105,105" fill="#fff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.4))"/>
             <circle cx="100" cy="100" r="8" fill="#fff" stroke="rgba(0,0,0,0.2)" stroke-width="2"/>
           </g>
-          <text x="-4" y="100" font-family="Nunito" font-size="22" fill="rgba(255,255,255,0.9)" font-weight="700" text-anchor="start">MIN</text>
-          <text x="204" y="100" font-family="Nunito" font-size="22" fill="rgba(255,255,255,0.9)" font-weight="700" text-anchor="end">MIN</text>
-          <text x="100" y="12" font-family="Nunito" font-size="22" fill="rgba(255,255,255,1.0)" font-weight="700" text-anchor="middle">MAX</text>
+          <text x="24" y="100" font-family="Nunito" font-size="22" fill="rgba(255,255,255,0.9)" font-weight="700" text-anchor="start">MIN</text>
+          <text x="174" y="100" font-family="Nunito" font-size="22" fill="rgba(255,255,255,0.9)" font-weight="700" text-anchor="end">MIN</text>
+          <text x="100" y="50" font-family="Nunito" font-size="22" fill="rgba(255,255,255,1.0)" font-weight="700" text-anchor="middle">MAX</text>
         </svg>
       </div>
       <button id="play-btn">PLAY</button>
