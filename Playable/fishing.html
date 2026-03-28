@@ -4,953 +4,1642 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Fishing In The Deep</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Segoe UI',sans-serif;touch-action:none;user-select:none;}
-canvas#game{display:block;width:100%;height:100%;}
-#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;}
-#ui *{pointer-events:auto;}
+:root {
+  --deep-blue: #001133;
+  --surface-teal: #0a8a7a;
+  --gold: #ffd700;
+  --ui-font: 'Nunito', sans-serif;
+  --display-font: 'Fredoka One', cursive;
+  --common-color: #8899aa;
+  --uncommon-color: #2ecc71;
+  --rare-color: #e67e22;
+  --amazing-color: #f1c40f;
+  --legendary-color: #e74c3c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--deep-blue); }
+
+#c {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0; display: block;
+}
+#vfx {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 1; pointer-events: none;
+}
+#ui {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 2; font-family: var(--ui-font); user-select: none;
+  -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
 
 /* Coin counter */
-#coin-counter{position:absolute;top:16px;right:16px;background:rgba(0,0,0,0.6);border:2px solid #f0c040;border-radius:12px;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;color:#f0c040;z-index:20;}
-#coin-icon{width:22px;height:22px;background:radial-gradient(circle at 40% 35%,#ffe066,#c8960c);border-radius:50%;border:2px solid #a07808;flex-shrink:0;}
-#coin-value{min-width:40px;text-align:right;transition:color .15s;}
+#coin-display {
+  position: absolute; top: max(20px, env(safe-area-inset-top, 20px)); left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(0,0,0,0.5); border-radius: 30px; padding: 10px 22px;
+  transition: opacity 0.3s ease; font-size: 22px; font-weight: 800;
+  color: var(--gold); text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  border: 2px solid rgba(255,215,0,0.3); z-index: 5;
+}
+#coin-display .coin-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe066, #cc9900);
+  border: 2px solid #aa7700; flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(255,215,0,0.4);
+}
+#coin-display.hidden { opacity: 0; pointer-events: none; }
+#coin-display.pulse { animation: coinPulse 0.3s ease; }
 
 /* Fish counter */
-#fish-counter{position:absolute;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);border:2px solid #44bbee;border-radius:12px;padding:6px 16px;font-size:18px;font-weight:700;color:#44bbee;display:none;z-index:20;}
+#fish-display {
+  position: absolute; top: max(20px, env(safe-area-inset-top, 20px)); left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(0,0,0,0.5); border-radius: 30px; padding: 10px 18px;
+  transition: opacity 0.3s ease; opacity: 0; pointer-events: none;
+  border: 2px solid rgba(10,138,122,0.4); z-index: 5;
+}
+#fish-display.visible { opacity: 1; }
+#fish-count-text {
+  font-size: 20px; font-weight: 800; color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5); min-width: 40px;
+}
+#fish-bar-wrap {
+  width: 120px; height: 16px; border-radius: 10px;
+  background: rgba(255,255,255,0.15); overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+#fish-bar {
+  height: 100%; width: 0%; border-radius: 10px;
+  background: linear-gradient(90deg, var(--surface-teal), var(--gold));
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
-/* Round indicator */
-#round-indicator{position:absolute;top:16px;left:16px;background:rgba(0,0,0,0.6);border:2px solid #aaa;border-radius:12px;padding:6px 14px;font-size:15px;font-weight:600;color:#ccc;z-index:20;}
+/* Bottom area — single stacking context for all bottom UI */
+#bottom-area {
+  position: absolute; bottom: 0; left: 0; width: 100%;
+  display: flex; flex-direction: column; align-items: center;
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
+  pointer-events: none; /* children opt-in */
+  transition: opacity 0.3s ease;
+}
+#bottom-area.hidden { opacity: 0; pointer-events: none !important; }
+#bottom-area > * { pointer-events: auto; }
+
+/* Upgrade buttons row — sits ABOVE gauge+play */
+#upgrades {
+  display: flex; justify-content: center; gap: 16px;
+  padding: 0 16px; margin-bottom: 20px;
+  width: 100%; max-width: 400px;
+  transition: opacity 0.3s ease, max-height 0.3s ease;
+}
+#upgrades.hidden { opacity: 0; pointer-events: none !important; max-height: 0; margin-bottom: 0; overflow: hidden; }
+.upgrade-btn {
+  font-family: var(--ui-font); font-weight: 700; font-size: 14px;
+  color: #fff; background: rgba(0,60,100,0.7); border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 14px; padding: 12px 16px; cursor: pointer;
+  text-align: center; min-width: 140px; min-height: 56px;
+  flex: 1; max-width: 180px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.upgrade-btn:not(.disabled):hover { border-color: var(--gold); background: rgba(0,80,130,0.8); }
+.upgrade-btn:not(.disabled):active { transform: scale(0.95); }
+.upgrade-btn.disabled {
+  opacity: 0.4; cursor: default; border-color: rgba(255,255,255,0.1);
+}
+.upgrade-btn .cost {
+  color: var(--gold); font-size: 15px; margin-top: 6px;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.upgrade-btn .cost .mini-coin {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe066, #cc9900);
+  border: 1px solid #aa7700; display: inline-block;
+}
+.upgrade-btn .level { font-size: 11px; opacity: 0.7; margin-top: 3px; }
+
+/* Controls (gauge + play button) */
+#controls {
+  display: flex; flex-direction: column; align-items: center;
+  transition: opacity 0.3s ease;
+}
+#controls.hidden { opacity: 0; pointer-events: none !important; }
 
 /* Gauge */
-#gauge-wrap{position:absolute;bottom:140px;left:50%;transform:translateX(-50%);width:200px;height:110px;display:none;z-index:20;}
-#gauge-svg{width:200px;height:110px;}
-#gauge-label{text-align:center;color:#cef;font-size:13px;margin-top:2px;font-weight:600;text-shadow:0 0 6px rgba(100,200,255,0.5);}
+#gauge-wrap {
+  width: 200px; height: 110px; position: relative; margin-bottom: 16px;
+}
+#gauge-svg { width: 100%; height: 100%; }
 
 /* Play button */
-#play-btn{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#22cc66,#11aa44);color:#fff;border:none;border-radius:16px;padding:14px 48px;font-size:22px;font-weight:800;cursor:pointer;display:none;z-index:20;box-shadow:0 4px 20px rgba(34,204,102,0.4);letter-spacing:1px;transition:transform .12s,box-shadow .12s;}
-#play-btn:hover{transform:translateX(-50%) scale(1.05);box-shadow:0 6px 28px rgba(34,204,102,0.6);}
-#play-btn:active{transform:translateX(-50%) scale(0.97);}
+#play-btn {
+  font-family: var(--display-font); font-size: 24px; color: #fff;
+  background: linear-gradient(135deg, #ff6b35, #ff3366);
+  border: none; border-radius: 50px; padding: 16px 52px;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+  box-shadow: 0 6px 20px rgba(255,51,102,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 56px;
+  touch-action: manipulation;
+}
+#play-btn:active { transform: scale(0.95); box-shadow: 0 3px 10px rgba(255,51,102,0.4); }
+#play-btn:hover { transform: scale(1.05); }
 
-/* Upgrade panel */
-#upgrade-panel{position:absolute;bottom:200px;left:50%;transform:translateX(-50%);display:none;flex-direction:row;gap:12px;z-index:20;}
-.upgrade-card{background:rgba(0,20,40,0.85);border:2px solid #2288aa;border-radius:14px;padding:12px 16px;min-width:140px;text-align:center;cursor:pointer;transition:all .15s;}
-.upgrade-card:hover:not(.disabled){border-color:#44ccee;box-shadow:0 0 16px rgba(68,187,238,0.3);transform:translateY(-2px);}
-.upgrade-card.disabled{opacity:0.4;cursor:default;border-color:#444;}
-.upgrade-title{font-size:12px;color:#88ccee;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
-.upgrade-value{font-size:22px;color:#fff;font-weight:800;margin-bottom:4px;}
-.upgrade-cost{font-size:13px;color:#f0c040;font-weight:600;}
+/* Tutorial toast */
+#tutorial-toast {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.75); color: #fff; font-family: var(--display-font);
+  font-size: 18px; padding: 16px 28px; border-radius: 16px;
+  opacity: 0; pointer-events: none; text-align: center;
+  border: 2px solid rgba(255,255,255,0.15);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+#tutorial-toast.show { animation: toastFade 1.8s ease forwards; }
 
-/* Tutorial tooltip */
-#tutorial{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);border:2px solid #44bbee;border-radius:16px;padding:16px 28px;color:#fff;font-size:17px;font-weight:600;text-align:center;display:none;z-index:30;animation:tutPulse 1.5s ease-in-out infinite;}
-@keyframes tutPulse{0%,100%{box-shadow:0 0 10px rgba(68,187,238,0.3);}50%{box-shadow:0 0 25px rgba(68,187,238,0.6);}}
+/* Depth indicator */
+#depth-indicator {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  font-family: var(--display-font); font-size: 20px; color: rgba(255,255,255,0.7);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  opacity: 0; transition: opacity 0.3s ease;
+  background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 10px;
+}
 
 /* Summary overlay */
-#summary-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.0);display:none;z-index:25;pointer-events:none;}
-
-/* Fish value popup */
-.fish-popup{position:absolute;pointer-events:none;text-align:center;z-index:30;animation:popUp .8s ease-out forwards;}
-.fish-popup .value{font-size:20px;font-weight:800;color:#f0c040;text-shadow:0 0 8px rgba(240,192,64,0.6);}
-.fish-popup .rarity{font-size:14px;font-weight:700;margin-top:2px;}
-.rarity-rare{color:#44bbee;text-shadow:0 0 8px rgba(68,187,238,0.6);}
-.rarity-amazing{color:#cc66ff;text-shadow:0 0 8px rgba(204,102,255,0.6);}
-.rarity-legendary{color:#ff6644;text-shadow:0 0 12px rgba(255,102,68,0.8);}
-.rarity-jackpot{color:#ff2200;text-shadow:0 0 16px rgba(255,34,0,0.9);font-size:16px !important;}
-@keyframes popUp{0%{opacity:0;transform:translateY(0) scale(0.3);}20%{opacity:1;transform:translateY(-10px) scale(1.2);}40%{transform:translateY(-15px) scale(1);}100%{opacity:0;transform:translateY(-50px) scale(0.8);}}
-
-/* Flying coin */
-.flying-coin{position:absolute;width:16px;height:16px;background:radial-gradient(circle at 40% 35%,#ffe066,#c8960c);border-radius:50%;border:1.5px solid #a07808;pointer-events:none;z-index:35;}
+#summary {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 10;
+}
+#summary.visible { opacity: 1; pointer-events: auto; }
+#summary-total {
+  font-family: var(--display-font); font-size: 36px; color: var(--gold);
+  text-shadow: 0 3px 10px rgba(255,215,0,0.5), 0 0 30px rgba(255,215,0,0.2);
+  opacity: 0; transform: scale(0.5);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#summary-total.show { opacity: 1; transform: scale(1); }
 
 /* End screen */
-#end-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,10,30,0.92);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:40;}
-#end-screen h1{font-size:32px;color:#f0c040;margin-bottom:8px;text-shadow:0 0 20px rgba(240,192,64,0.5);}
-#end-screen .subtitle{font-size:16px;color:#88ccee;margin-bottom:24px;}
-#end-screen .total{font-size:48px;color:#fff;font-weight:800;margin-bottom:32px;}
-#end-screen .total .coin-inline{display:inline-block;width:28px;height:28px;background:radial-gradient(circle at 40% 35%,#ffe066,#c8960c);border-radius:50%;border:2px solid #a07808;vertical-align:middle;margin-right:8px;position:relative;top:-2px;}
-#cta-btn{background:linear-gradient(135deg,#ff6644,#ee3311);color:#fff;border:none;border-radius:16px;padding:16px 52px;font-size:22px;font-weight:800;cursor:pointer;box-shadow:0 4px 24px rgba(255,102,68,0.5);letter-spacing:1px;transition:transform .12s;}
-#cta-btn:hover{transform:scale(1.06);}
+#end-screen {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(ellipse at center, rgba(0,17,51,0.85), rgba(0,0,0,0.95));
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.6s ease; z-index: 100;
+  gap: 40px; padding: 40px 24px;
+}
+#end-screen.visible { opacity: 1; pointer-events: auto; }
+#end-title {
+  font-family: var(--display-font); font-size: clamp(32px, 8vw, 48px); color: #fff;
+  text-shadow: 0 0 30px rgba(10,138,122,0.6), 0 4px 15px rgba(0,0,0,0.5);
+  text-align: center; line-height: 1.2;
+}
+#end-title span { color: var(--gold); display: block; font-size: clamp(20px, 5vw, 28px); margin-top: 8px; }
+#cta-btn {
+  font-family: var(--display-font); font-size: clamp(22px, 5vw, 32px); color: #fff;
+  background: linear-gradient(135deg, #00c9ff, #0a8a7a);
+  border: none; border-radius: 60px; padding: 20px 64px;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
+  box-shadow: 0 8px 30px rgba(10,138,122,0.5), 0 0 60px rgba(10,138,122,0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: ctaPulse 2s ease-in-out infinite;
+  min-height: 64px; min-width: 220px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+#cta-btn:hover { transform: scale(1.08); }
+#cta-btn:active { transform: scale(0.96); }
 
-/* Title */
-#title-area{position:absolute;top:15%;left:50%;transform:translateX(-50%);text-align:center;display:none;z-index:20;}
-#title-area h1{font-size:36px;color:#fff;text-shadow:0 0 20px rgba(68,187,238,0.5),0 2px 4px rgba(0,0,0,0.5);letter-spacing:2px;}
-#title-area p{font-size:15px;color:#88ccee;margin-top:6px;font-weight:500;}
+/* Floating labels */
+.float-label {
+  position: fixed; pointer-events: none; z-index: 15;
+  font-family: var(--display-font); font-weight: 700;
+  animation: popFloat 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  white-space: nowrap;
+}
+.attaboy-label {
+  position: fixed; pointer-events: none; z-index: 16;
+  font-family: var(--display-font); text-transform: uppercase;
+  animation: attaboy 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  text-shadow: 0 3px 15px rgba(0,0,0,0.6);
+  white-space: nowrap;
+}
+
+/* Flying coin */
+.fly-coin {
+  position: fixed; pointer-events: none; z-index: 14;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe066, #cc9900);
+  border: 2px solid #aa7700;
+  box-shadow: 0 2px 8px rgba(255,215,0,0.5);
+}
+
+/* Screen flash */
+#screen-flash {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: #fff; opacity: 0; pointer-events: none; z-index: 20;
+  transition: opacity 0.15s ease;
+}
+#screen-flash.flash { opacity: 0.7; }
+
+/* Edge flash */
+#edge-flash {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 19; opacity: 0;
+  transition: opacity 0.2s ease;
+}
+#edge-flash.flash {
+  opacity: 1;
+  box-shadow: inset 0 0 80px 20px var(--rare-color);
+}
+
+/* Keyframes */
+@keyframes coinPulse {
+  0% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.15); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+@keyframes toastFade {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+}
+@keyframes popFloat {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(0.5); }
+  30% { transform: translate(-50%, -15px) scale(1.3); }
+  60% { transform: translate(-50%, -30px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -60px) scale(0.9); }
+}
+@keyframes attaboy {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0); }
+  25% { transform: translate(-50%, -50%) scale(1.5); }
+  45% { transform: translate(-50%, -50%) scale(1.1); }
+  70% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+}
+@keyframes ctaPulse {
+  0%, 100% { box-shadow: 0 8px 30px rgba(10,138,122,0.5), 0 0 60px rgba(10,138,122,0.2); }
+  50% { box-shadow: 0 8px 40px rgba(10,138,122,0.7), 0 0 80px rgba(10,138,122,0.35); transform: scale(1.03); }
+}
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
+<canvas id="c"></canvas>
+<canvas id="vfx"></canvas>
 <div id="ui">
-  <div id="coin-counter"><div id="coin-icon"></div><span id="coin-value">100</span></div>
-  <div id="fish-counter">🐟 <span id="fish-value">0</span> / <span id="fish-max">6</span></div>
-  <div id="round-indicator">Round <span id="round-num">1</span>/3</div>
-  <div id="title-area"><h1>FISHING IN THE DEEP</h1><p>Cast your hook & reel in the catch!</p></div>
-  <div id="gauge-wrap">
-    <svg id="gauge-svg" viewBox="0 0 200 110">
-      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="8" stroke-linecap="round" id="gauge-arc"/>
-      <defs>
-        <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#44bbee"/>
-          <stop offset="50%" stop-color="#22cc66"/>
-          <stop offset="100%" stop-color="#ff6644"/>
-        </linearGradient>
-      </defs>
-      <line id="gauge-needle" x1="100" y1="100" x2="100" y2="25" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="100" cy="100" r="6" fill="#fff"/>
-    </svg>
-    <div id="gauge-label">Depth: 5m</div>
+  <div id="coin-display"><div class="coin-icon"></div><span id="coin-text">100</span></div>
+  <div id="fish-display">
+    <span id="fish-count-text">0 / 6</span>
+    <div id="fish-bar-wrap"><div id="fish-bar"></div></div>
   </div>
-  <div id="upgrade-panel">
-    <div class="upgrade-card" id="upg-fish" onclick="doUpgrade('fish')">
-      <div class="upgrade-title">Max Catch</div>
-      <div class="upgrade-value" id="upg-fish-val">6 → 7</div>
-      <div class="upgrade-cost" id="upg-fish-cost">💰 50</div>
+
+  <div id="bottom-area">
+    <div id="upgrades" class="hidden">
+      <div class="upgrade-btn" id="upgrade-fish">
+        <div>🐟 Max Fish</div>
+        <div class="level">6 fish</div>
+        <div class="cost"><div class="mini-coin"></div> 50</div>
+      </div>
+      <div class="upgrade-btn" id="upgrade-depth">
+        <div>⚓ Max Depth</div>
+        <div class="level">5m</div>
+        <div class="cost"><div class="mini-coin"></div> 50</div>
+      </div>
     </div>
-    <div class="upgrade-card" id="upg-depth" onclick="doUpgrade('depth')">
-      <div class="upgrade-title">Max Depth</div>
-      <div class="upgrade-value" id="upg-depth-val">5m → 10m</div>
-      <div class="upgrade-cost" id="upg-depth-cost">💰 50</div>
+
+    <div id="controls">
+      <div id="gauge-wrap">
+        <svg id="gauge-svg" viewBox="0 0 200 110">
+          <defs>
+            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#e74c3c"/>
+              <stop offset="25%" stop-color="#f39c12"/>
+              <stop offset="50%" stop-color="#2ecc71"/>
+              <stop offset="75%" stop-color="#f39c12"/>
+              <stop offset="100%" stop-color="#e74c3c"/>
+            </linearGradient>
+          </defs>
+          <path d="M 15 100 A 85 85 0 0 1 185 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="18" stroke-linecap="round"/>
+          <path d="M 15 100 A 85 85 0 0 1 185 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round"/>
+          <g id="gauge-pointer" transform="rotate(0, 100, 100)">
+            <polygon points="100,22 95,105 105,105" fill="#fff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.4))"/>
+            <circle cx="100" cy="100" r="8" fill="#fff" stroke="rgba(0,0,0,0.2)" stroke-width="2"/>
+          </g>
+          <text x="20" y="108" font-family="Nunito" font-size="10" fill="rgba(255,255,255,0.5)" font-weight="700">MIN</text>
+          <text x="160" y="108" font-family="Nunito" font-size="10" fill="rgba(255,255,255,0.5)" font-weight="700">MIN</text>
+          <text x="86" y="22" font-family="Nunito" font-size="10" fill="rgba(255,255,255,0.7)" font-weight="700">MAX</text>
+        </svg>
+      </div>
+      <button id="play-btn">CAST!</button>
     </div>
   </div>
-  <button id="play-btn" onclick="startCast()">CAST!</button>
-  <div id="tutorial">↔ Drag to move the hook & catch fish!</div>
-  <div id="summary-overlay"></div>
+
+  <div id="tutorial-toast">DRAG TO CATCH FISH! ←→</div>
+  <div id="depth-indicator"></div>
+  <div id="summary"><div id="summary-total"></div></div>
+  <div id="screen-flash"></div>
+  <div id="edge-flash"></div>
+
   <div id="end-screen">
-    <h1>🎣 Great Haul!</h1>
-    <div class="subtitle">Your fishing adventure is complete</div>
-    <div class="total"><span class="coin-inline"></span><span id="end-total">0</span></div>
-    <button id="cta-btn" onclick="restartGame()">PLAY AGAIN</button>
+    <div id="end-title">FISHING<br>IN THE DEEP<span>Can you catch them all?</span></div>
+    <button id="cta-btn" onclick="window.open('about:blank','_blank')">PLAY NOW</button>
   </div>
 </div>
 
-<script type="importmap">
-{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"}}
-</script>
-<script type="module">
-import * as THREE from 'three';
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
 
-// ─── GAME STATE ──────────────────────────────────────────
-const GS = {
-  coins: 100, round: 1, phase: 'IDLE',
-  maxFish: 6, maxDepth: 5,
-  currentFishCount: 0, caughtFish: [], selectedDepth: 0,
-  needleNorm: 0, needleDir: 1,
-  fishLevel: 0, depthLevel: 0,
-  totalEarned: 0, roundEarnings: 0,
-};
+// ============================================================
+// AUDIO MANAGER (synthesized — no external files needed)
+// ============================================================
+const AudioMgr = {
+  ctx: null,
+  inited: false,
+  musicGain: null,
+  musicOsc: null,
 
-const MAX_FISH_UPGRADES = [
-  {fish:7,cost:50},{fish:8,cost:100},{fish:9,cost:200},{fish:10,cost:400}
-];
-const MAX_DEPTH_UPGRADES = [
-  {depth:10,cost:50},{depth:15,cost:75},{depth:20,cost:150},{depth:30,cost:300}
-];
-const FISH_TYPES = [
-  {id:'sardine',minDepth:0,maxDepth:30,value:5,color:0x88ccee,size:0.3,rarity:null},
-  {id:'bass',minDepth:0,maxDepth:30,value:12,color:0x4488aa,size:0.45,rarity:null},
-  {id:'tuna',minDepth:5,maxDepth:30,value:30,color:0x226688,size:0.6,rarity:'Rare!'},
-  {id:'swordfish',minDepth:10,maxDepth:30,value:75,color:0x113355,size:0.8,rarity:'Amazing!'},
-  {id:'anglerfish',minDepth:15,maxDepth:30,value:150,color:0x221133,size:0.7,rarity:'Legendary!'},
-  {id:'oarfish',minDepth:20,maxDepth:30,value:300,color:0xaa3322,size:1.1,rarity:'JACKPOT!'},
-];
-
-// ─── DOM REFS ────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const coinVal = $('coin-value'), fishVal = $('fish-value'), fishMax = $('fish-max');
-const fishCounter = $('fish-counter'), gaugeWrap = $('gauge-wrap');
-const playBtn = $('play-btn'), upgPanel = $('upgrade-panel');
-const gaugeNeedle = $('gauge-needle'), gaugeLabel = $('gauge-label');
-const tutorialEl = $('tutorial'), summaryOv = $('summary-overlay');
-const endScreen = $('end-screen'), endTotal = $('end-total');
-const roundNum = $('round-num'), titleArea = $('title-area');
-
-// ─── THREE.JS SETUP ──────────────────────────────────────
-const canvas = $('game');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a2a4a);
-scene.fog = new THREE.FogExp2(0x051828, 0.03);
-
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 200);
-camera.position.set(0, 2, 10);
-const cameraTarget = {x:0, y:2, z:10};
-
-window.addEventListener('resize', () => {
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-});
-
-// Lighting
-const ambientLight = new THREE.AmbientLight(0x334466, 0.5);
-scene.add(ambientLight);
-
-const sunLight = new THREE.DirectionalLight(0xffeedd, 1.0);
-sunLight.position.set(3, 10, 5);
-scene.add(sunLight);
-
-const hookLight = new THREE.PointLight(0x4488cc, 0.0, 20);
-scene.add(hookLight);
-
-// ─── WATER SURFACE ───────────────────────────────────────
-const waterGeo = new THREE.PlaneGeometry(30, 30, 50, 50);
-const waterMat = new THREE.MeshPhongMaterial({
-  color: 0x1188bb, transparent:true, opacity:0.55,
-  shininess:80, side:THREE.DoubleSide
-});
-const waterMesh = new THREE.Mesh(waterGeo, waterMat);
-waterMesh.rotation.x = -Math.PI/2;
-waterMesh.position.y = 0;
-scene.add(waterMesh);
-
-const waterVerts = waterGeo.attributes.position;
-const waterOrigY = new Float32Array(waterVerts.count);
-for(let i=0;i<waterVerts.count;i++) waterOrigY[i] = waterVerts.getY(i);
-
-function animateWater(t) {
-  for(let i=0;i<waterVerts.count;i++){
-    const x=waterVerts.getX(i), z=waterVerts.getZ(i);
-    waterVerts.setY(i, waterOrigY[i] + Math.sin(x*0.5+t*1.5)*0.15 + Math.cos(z*0.7+t*1.2)*0.1);
-  }
-  waterVerts.needsUpdate=true;
-}
-
-// ─── BUBBLES ─────────────────────────────────────────────
-const bubbles = [];
-function createBubbles(){
-  const geo = new THREE.SphereGeometry(0.06,8,8);
-  const mat = new THREE.MeshPhongMaterial({color:0xaaddff,transparent:true,opacity:0.4});
-  for(let i=0;i<40;i++){
-    const m = new THREE.Mesh(geo,mat.clone());
-    m.position.set((Math.random()-0.5)*14, -Math.random()*35, (Math.random()-0.5)*6);
-    m.userData = {speed:0.3+Math.random()*0.5, baseX:m.position.x};
-    scene.add(m);
-    bubbles.push(m);
-  }
-}
-createBubbles();
-
-function animateBubbles(t,dt){
-  for(const b of bubbles){
-    b.position.y += b.userData.speed * dt;
-    b.position.x = b.userData.baseX + Math.sin(t*2+b.userData.baseX*3)*0.3;
-    if(b.position.y > 1){
-      b.position.y = -30 - Math.random()*5;
-      b.position.x = (Math.random()-0.5)*14;
-      b.userData.baseX = b.position.x;
-    }
-  }
-}
-
-// ─── FISHERMAN (at surface) ──────────────────────────────
-const fishermanGroup = new THREE.Group();
-// Body
-const bodyGeo = new THREE.BoxGeometry(0.6,1.0,0.4);
-const bodyMat = new THREE.MeshStandardMaterial({color:0x556677});
-const body = new THREE.Mesh(bodyGeo,bodyMat);
-body.position.y = 1.5;
-fishermanGroup.add(body);
-// Head
-const headGeo = new THREE.SphereGeometry(0.25,12,12);
-const headMat = new THREE.MeshStandardMaterial({color:0xddaa88});
-const head = new THREE.Mesh(headGeo,headMat);
-head.position.y = 2.25;
-fishermanGroup.add(head);
-// Hat
-const hatGeo = new THREE.CylinderGeometry(0.3,0.35,0.2,12);
-const hatMat = new THREE.MeshStandardMaterial({color:0x886633});
-const hat = new THREE.Mesh(hatGeo,hatMat);
-hat.position.y = 2.5;
-fishermanGroup.add(hat);
-// Rod
-const rodGeo = new THREE.CylinderGeometry(0.02,0.02,3,6);
-const rodMat = new THREE.MeshStandardMaterial({color:0x997744});
-const rod = new THREE.Mesh(rodGeo,rodMat);
-rod.position.set(0.3, 2.8, 0);
-rod.rotation.z = -0.5;
-fishermanGroup.add(rod);
-
-fishermanGroup.position.set(0, 0, 0);
-scene.add(fishermanGroup);
-
-// ─── HOOK ────────────────────────────────────────────────
-const hookGroup = new THREE.Group();
-// Shank
-const shankGeo = new THREE.CylinderGeometry(0.02,0.02,0.4,6);
-const hookMat = new THREE.MeshStandardMaterial({color:0xcccccc, metalness:0.8, roughness:0.2});
-const shank = new THREE.Mesh(shankGeo, hookMat);
-hookGroup.add(shank);
-// Curved part
-const curveGeo = new THREE.TorusGeometry(0.12, 0.025, 8, 12, Math.PI);
-const curve = new THREE.Mesh(curveGeo, hookMat);
-curve.position.y = -0.2;
-curve.rotation.z = Math.PI;
-hookGroup.add(curve);
-// Point
-const pointGeo = new THREE.ConeGeometry(0.03, 0.12, 6);
-const point = new THREE.Mesh(pointGeo, hookMat);
-point.position.set(0.12, -0.14, 0);
-point.rotation.z = -0.8;
-hookGroup.add(point);
-
-hookGroup.position.set(0, 0.5, 0);
-scene.add(hookGroup);
-
-// Fishing line
-const lineGeo = new THREE.BufferGeometry();
-const linePos = new Float32Array(6);
-lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
-const lineMat = new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.6});
-const fishingLine = new THREE.Line(lineGeo, lineMat);
-scene.add(fishingLine);
-
-function updateLine(){
-  const pos = fishingLine.geometry.attributes.position.array;
-  const rodTip = new THREE.Vector3(0.3, 2.8, 0);
-  // Rod tip in world
-  const tip = rodTip.clone();
-  tip.x += fishermanGroup.position.x;
-  pos[0]=tip.x; pos[1]=tip.y+1.2; pos[2]=tip.z;
-  pos[3]=hookGroup.position.x; pos[4]=hookGroup.position.y+0.2; pos[5]=hookGroup.position.z;
-  fishingLine.geometry.attributes.position.needsUpdate=true;
-}
-
-// ─── FISH MANAGEMENT ─────────────────────────────────────
-let activeFish = [];
-
-function createFishMesh(type){
-  const g = new THREE.Group();
-  // Body (flattened sphere)
-  const bodyG = new THREE.SphereGeometry(type.size*0.5, 12, 8);
-  const mat = new THREE.MeshStandardMaterial({
-    color:type.color, emissive:type.color, emissiveIntensity:0.15,
-    metalness:0.1, roughness:0.6
-  });
-  const bMesh = new THREE.Mesh(bodyG, mat);
-  bMesh.scale.set(1, 0.5, 0.7);
-  g.add(bMesh);
-  // Tail
-  const tailG = new THREE.ConeGeometry(type.size*0.25, type.size*0.4, 6);
-  const tail = new THREE.Mesh(tailG, mat);
-  tail.position.x = -type.size*0.45;
-  tail.rotation.z = Math.PI/2;
-  g.add(tail);
-  // Eye
-  const eyeG = new THREE.SphereGeometry(type.size*0.08, 8, 8);
-  const eyeMat = new THREE.MeshBasicMaterial({color:0xffffff});
-  const eye = new THREE.Mesh(eyeG, eyeMat);
-  eye.position.set(type.size*0.2, type.size*0.08, type.size*0.18);
-  g.add(eye);
-  const pupilG = new THREE.SphereGeometry(type.size*0.04, 6, 6);
-  const pupil = new THREE.Mesh(pupilG, new THREE.MeshBasicMaterial({color:0x000000}));
-  pupil.position.set(type.size*0.24, type.size*0.08, type.size*0.2);
-  g.add(pupil);
-  return g;
-}
-
-function spawnFish(depth, count){
-  clearFish();
-  const eligible = FISH_TYPES.filter(f => f.minDepth <= depth);
-  for(let i=0;i<count;i++){
-    const weights = eligible.map(f => {
-      if(f.rarity==='JACKPOT!') return 0.5;
-      if(f.rarity==='Legendary!') return 1;
-      if(f.rarity==='Amazing!') return 2;
-      if(f.rarity==='Rare!') return 3;
-      return 6;
-    });
-    const totalW = weights.reduce((a,b)=>a+b,0);
-    let r = Math.random()*totalW, acc=0, chosen=eligible[0];
-    for(let j=0;j<eligible.length;j++){
-      acc+=weights[j];
-      if(r<=acc){chosen=eligible[j];break;}
-    }
-    const mesh = createFishMesh(chosen);
-    const x = (Math.random()-0.5)*6;
-    const y = -(1 + Math.random()*(depth-1));
-    const z = (Math.random()-0.5)*2;
-    mesh.position.set(x,y,z);
-    // random facing direction
-    if(Math.random()>0.5) mesh.scale.x = -1;
-    scene.add(mesh);
-    activeFish.push({
-      type:chosen, mesh, caught:false,
-      worldPos:{x,y,z},
-      swimOffset:Math.random()*Math.PI*2,
-      swimSpeed:0.5+Math.random()*1.0
-    });
-  }
-}
-
-function clearFish(){
-  for(const f of activeFish) scene.remove(f.mesh);
-  activeFish=[];
-}
-
-function animateFish(t){
-  for(const f of activeFish){
-    if(f.caught) continue;
-    f.mesh.position.x = f.worldPos.x + Math.sin(t*f.swimSpeed+f.swimOffset)*0.5;
-    f.mesh.position.y = f.worldPos.y + Math.sin(t*0.8+f.swimOffset)*0.15;
-    // gentle wobble
-    f.mesh.rotation.z = Math.sin(t*f.swimSpeed*1.5+f.swimOffset)*0.1;
-  }
-}
-
-// ─── COLLISION ───────────────────────────────────────────
-function checkCollisions(){
-  if(GS.phase!=='ASCENDING') return;
-  const hx = hookGroup.position.x, hy = hookGroup.position.y;
-  const hr = 0.45; // hook catch radius
-  for(const f of activeFish){
-    if(f.caught) continue;
-    const dx = f.mesh.position.x - hx;
-    const dy = f.mesh.position.y - hy;
-    const dist = Math.sqrt(dx*dx+dy*dy);
-    if(dist < hr + f.type.size*0.3){
-      catchFish(f);
-      if(GS.currentFishCount >= GS.maxFish) break;
-    }
-  }
-}
-
-function catchFish(f){
-  f.caught = true;
-  GS.caughtFish.push(f);
-  GS.currentFishCount++;
-  updateFishCounter();
-  // Attach to hook
-  const offset = GS.caughtFish.length;
-  f.mesh.position.set(
-    hookGroup.position.x + (Math.random()-0.5)*0.3,
-    hookGroup.position.y - 0.3 - offset*0.25,
-    hookGroup.position.z
-  );
-  f.attachOffset = {
-    x:(Math.random()-0.5)*0.3,
-    y:-0.3 - offset*0.25
-  };
-  // Show popup at screen position
-  showCatchPopup(f);
-  AudioManager.playCatch(f.type);
-  // Check full
-  if(GS.currentFishCount >= GS.maxFish){
-    hookSpeed *= 2.5;
-    collisionsEnabled = false;
-  }
-}
-
-// ─── VFX ─────────────────────────────────────────────────
-const particles = [];
-
-function spawnCoinBurst(worldPos){
-  const count = 15;
-  for(let i=0;i<count;i++){
-    const geo = new THREE.SphereGeometry(0.05,6,6);
-    const mat = new THREE.MeshBasicMaterial({color:0xf0c040});
-    const p = new THREE.Mesh(geo,mat);
-    p.position.copy(worldPos);
-    const angle = (i/count)*Math.PI*2;
-    p.userData = {
-      vx:Math.cos(angle)*2+Math.random()*0.5,
-      vy:2+Math.random()*2,
-      vz:(Math.random()-0.5)*1,
-      life:1.0
-    };
-    scene.add(p);
-    particles.push(p);
-  }
-}
-
-function updateParticles(dt){
-  for(let i=particles.length-1;i>=0;i--){
-    const p=particles[i];
-    p.userData.vy -= 6*dt;
-    p.position.x += p.userData.vx*dt;
-    p.position.y += p.userData.vy*dt;
-    p.position.z += p.userData.vz*dt;
-    p.userData.life -= dt*1.5;
-    p.material.opacity = Math.max(0,p.userData.life);
-    p.material.transparent = true;
-    if(p.userData.life<=0){
-      scene.remove(p);
-      particles.splice(i,1);
-    }
-  }
-}
-
-function showCatchPopup(f){
-  const screenPos = toScreen(f.mesh.position);
-  const popup = document.createElement('div');
-  popup.className = 'fish-popup';
-  popup.style.left = screenPos.x+'px';
-  popup.style.top = screenPos.y+'px';
-  popup.innerHTML = `<div class="value">+${f.type.value}</div>`;
-  if(f.type.rarity){
-    const cls = f.type.rarity==='Rare!'?'rarity-rare':
-      f.type.rarity==='Amazing!'?'rarity-amazing':
-      f.type.rarity==='Legendary!'?'rarity-legendary':'rarity-jackpot';
-    popup.innerHTML += `<div class="rarity ${cls}">${f.type.rarity}</div>`;
-    // Screen shake for rare+
-    shakeCamera(f.type.rarity==='JACKPOT!'?0.4:f.type.rarity==='Legendary!'?0.25:0.1);
-  }
-  $('ui').appendChild(popup);
-  setTimeout(()=>popup.remove(), 800);
-}
-
-function toScreen(pos3d){
-  const v = pos3d.clone().project(camera);
-  return {
-    x:(v.x*0.5+0.5)*window.innerWidth,
-    y:(-v.y*0.5+0.5)*window.innerHeight
-  };
-}
-
-let shakeAmount=0;
-function shakeCamera(amt){shakeAmount=Math.max(shakeAmount,amt);}
-
-// ─── AUDIO ───────────────────────────────────────────────
-const AudioManager = {
-  ctx:null,
-  init(){
-    if(this.ctx) return;
-    this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+  init() {
+    if (this.inited) return;
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.inited = true;
+    } catch(e) { console.warn('AudioContext unavailable'); }
   },
-  playTone(freq, dur, vol=0.15, type='sine'){
-    if(!this.ctx) return;
+
+  // Synthesize a short percussive "catch" blip
+  playCatch(rate = 1.0) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600 * rate, t);
+    osc.frequency.exponentialRampToValueAtTime(1200 * rate, t + 0.05);
+    osc.frequency.exponentialRampToValueAtTime(800 * rate, t + 0.15);
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
     osc.connect(gain).connect(this.ctx.destination);
-    osc.start(); osc.stop(this.ctx.currentTime+dur);
+    osc.start(t); osc.stop(t + 0.25);
   },
-  playNoise(dur, freq=800, vol=0.1){
-    if(!this.ctx) return;
-    const bufSize = this.ctx.sampleRate * dur;
-    const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for(let i=0;i<bufSize;i++) data[i]=(Math.random()*2-1);
-    const src = this.ctx.createBufferSource();
-    src.buffer = buf;
-    const filter = this.ctx.createBiquadFilter();
-    filter.type='lowpass'; filter.frequency.value=freq;
+
+  // Synthesize "rod use" — a whoosh/click
+  playRodUse() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur);
-    src.connect(filter).connect(gain).connect(this.ctx.destination);
-    src.start(); src.stop(this.ctx.currentTime+dur);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, t);
+    osc.frequency.exponentialRampToValueAtTime(80, t + 0.15);
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    osc.connect(gain).connect(this.ctx.destination);
+    osc.start(t); osc.stop(t + 0.2);
+    // Click
+    const osc2 = this.ctx.createOscillator();
+    const g2 = this.ctx.createGain();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(1200, t);
+    g2.gain.setValueAtTime(0.15, t);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    osc2.connect(g2).connect(this.ctx.destination);
+    osc2.start(t); osc2.stop(t + 0.05);
   },
-  playCast(){ this.playNoise(0.3, 600, 0.12); this.playTone(220, 0.2, 0.1); },
-  playCatch(type){
-    const base = 440 + type.value*2;
-    this.playTone(base, 0.2, 0.12);
-    this.playTone(base*1.5, 0.2, 0.08);
-    if(type.rarity){
-      setTimeout(()=>{
-        this.playTone(base*1.25,0.15,0.1);
-        this.playTone(base*2,0.25,0.1);
-      },100);
+
+  // Coin reward jingle
+  playCoinJingle() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const notes = [523, 659, 784];
+    notes.forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, t + i * 0.08);
+      gain.gain.linearRampToValueAtTime(0.15, t + i * 0.08 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.2);
+      osc.connect(gain).connect(this.ctx.destination);
+      osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.25);
+    });
+  },
+
+  startMusic() {
+    if (!this.ctx || this.musicOsc) return;
+    // Ambient underwater pad
+    this.musicGain = this.ctx.createGain();
+    this.musicGain.gain.value = 0.06;
+    this.musicGain.connect(this.ctx.destination);
+
+    const makeOsc = (freq, type, detune) => {
+      const o = this.ctx.createOscillator();
+      o.type = type; o.frequency.value = freq; o.detune.value = detune || 0;
+      const g = this.ctx.createGain(); g.gain.value = 0.5;
+      o.connect(g).connect(this.musicGain);
+      o.start(); return o;
+    };
+    this.musicOsc = [
+      makeOsc(65, 'sine', 0), makeOsc(98, 'sine', 5),
+      makeOsc(131, 'triangle', -3), makeOsc(196, 'sine', 8)
+    ];
+  },
+
+  stopMusic() {
+    if (this.musicOsc) {
+      this.musicOsc.forEach(o => { try { o.stop(); } catch(e){} });
+      this.musicOsc = null;
     }
-  },
-  playSplash(){ this.playNoise(0.2, 400, 0.1); },
-  playCoin(){ this.playTone(1200, 0.1, 0.08); },
-  playFanfare(){
-    this.playTone(523,0.15,0.12);
-    setTimeout(()=>this.playTone(659,0.15,0.12),150);
-    setTimeout(()=>this.playTone(784,0.25,0.15),300);
-  },
-  playNeedleTick(){ this.playTone(880, 0.04, 0.04); }
+  }
 };
 
-// ─── GAUGE / NEEDLE ──────────────────────────────────────
-let needleTime = 0;
-const NEEDLE_SPEED = 1.8;
-let lastTickNorm = -1;
+// ============================================================
+// GAME STATE
+// ============================================================
+const GS = {
+  state: 'IDLE',
+  coins: 100,
+  round: 1,
+  maxFish: 6,
+  maxDepth: 5,
+  selectedDepth: 0,
+  caughtFish: [],
+  caughtCount: 0,
+  upgrades: {
+    maxFish:  { levels: [6,7,8,9,10], costs: [0,50,100,200,400], current: 0 },
+    maxDepth: { levels: [5,10,15,20,30], costs: [0,50,75,150,300], current: 0 }
+  },
 
-function updateNeedle(dt){
-  if(GS.phase!=='IDLE') return;
-  needleTime += dt * NEEDLE_SPEED;
-  // Smooth pendulum using sine
-  GS.needleNorm = (Math.sin(needleTime)+1)/2;
-  // Needle SVG: angle from -90deg to +90deg mapped to arc
-  const angle = -90 + GS.needleNorm * 180;
-  const rad = angle * Math.PI/180;
-  const nx = 100 + Math.cos(rad)*75;
-  const ny = 100 - Math.sin(rad)*75;
-  gaugeNeedle.setAttribute('x2', nx);
-  gaugeNeedle.setAttribute('y2', ny);
-  // Depth label
-  const depth = Math.round(lerp(2, GS.maxDepth, GS.needleNorm));
-  gaugeLabel.textContent = `Depth: ${depth}m`;
-  // Tick sound at extremes
-  const tickThreshold = 0.05;
-  if((GS.needleNorm<tickThreshold && lastTickNorm>=tickThreshold)||(GS.needleNorm>1-tickThreshold && lastTickNorm<=1-tickThreshold)){
-    AudioManager.playNeedleTick();
+  transition(newState) {
+    const old = this.state;
+    this.state = newState;
+    SceneMgr.onStateChange(old, newState);
+    UIMgr.onStateChange(old, newState);
   }
-  lastTickNorm = GS.needleNorm;
-}
+};
 
-function lerp(a,b,t){return a+(b-a)*t;}
+// ============================================================
+// THREE.JS SCENE MANAGER
+// ============================================================
+const SceneMgr = {
+  renderer: null, scene: null, camera: null,
+  boat: null, fisherman: null, rod: null, hookMesh: null, lineMesh: null,
+  waterMesh: null, fishMeshes: [], liveFish: [],
+  hookY: 0, hookX: 0, hookTargetY: 0, hookSpeed: 0,
+  cameraRestY: 2, cameraRestZ: 8,
+  time: 0, pauseTimer: 0,
+  ascending: false, descending: false,
+  dragActive: false, dragStartX: 0, hookDragX: 0,
+  depthDarkPlane: null,
 
-// ─── INPUT ───────────────────────────────────────────────
-let inputX = 0;
-let inputActive = false;
+  init() {
+    const canvas = document.getElementById('c');
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setClearColor(0x001133);
 
-canvas.addEventListener('mousemove', e=>{
-  inputX = (e.clientX / window.innerWidth)*2 - 1; // -1 to 1
-  inputActive = true;
-});
-canvas.addEventListener('touchmove', e=>{
-  e.preventDefault();
-  if(e.touches.length>0){
-    inputX = (e.touches[0].clientX / window.innerWidth)*2 - 1;
-    inputActive = true;
+    this.scene = new THREE.Scene();
+    this.scene.fog = new THREE.FogExp2(0x001133, 0.035);
+
+    this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+    this.camera.position.set(0, 2, 8);
+    this.camera.lookAt(0, 0, 0);
+
+    // Lights
+    const ambient = new THREE.AmbientLight(0x4477aa, 0.6);
+    this.scene.add(ambient);
+    const dir = new THREE.DirectionalLight(0xffeedd, 0.8);
+    dir.position.set(3, 5, 4);
+    this.scene.add(dir);
+
+    this.buildWater();
+    this.buildBoat();
+    this.buildHook();
+    this.buildDepthDark();
+
+    // Input
+    const uiEl = document.getElementById('ui');
+    uiEl.addEventListener('pointerdown', e => this.onPointerDown(e));
+    uiEl.addEventListener('pointermove', e => this.onPointerMove(e));
+    uiEl.addEventListener('pointerup', () => this.onPointerUp());
+    uiEl.addEventListener('pointercancel', () => this.onPointerUp());
+
+    window.addEventListener('resize', () => this.resize());
+  },
+
+  resize() {
+    const w = window.innerWidth, h = window.innerHeight;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h);
+    VFX.resize();
+  },
+
+  buildWater() {
+    const geo = new THREE.PlaneGeometry(60, 60, 64, 64);
+    const mat = new THREE.ShaderMaterial({
+      transparent: true,
+      side: THREE.DoubleSide,
+      uniforms: {
+        uTime: { value: 0 },
+        uColor1: { value: new THREE.Color(0x0a8a7a) },
+        uColor2: { value: new THREE.Color(0x003355) }
+      },
+      vertexShader: `
+        uniform float uTime;
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          vec3 pos = position;
+          pos.z += sin(pos.x * 1.5 + uTime * 1.2) * 0.15 + cos(pos.y * 1.0 + uTime * 0.8) * 0.1;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uColor1;
+        uniform vec3 uColor2;
+        varying vec2 vUv;
+        void main() {
+          vec3 col = mix(uColor1, uColor2, vUv.y);
+          gl_FragColor = vec4(col, 0.7);
+        }
+      `
+    });
+    this.waterMesh = new THREE.Mesh(geo, mat);
+    this.waterMesh.rotation.x = -Math.PI / 2;
+    this.waterMesh.position.y = 0;
+    this.scene.add(this.waterMesh);
+  },
+
+  buildBoat() {
+    const boatGroup = new THREE.Group();
+    // Hull
+    const hull = new THREE.Mesh(
+      new THREE.BoxGeometry(2.5, 0.5, 1.2),
+      new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.8 })
+    );
+    hull.position.y = 0.15;
+    boatGroup.add(hull);
+
+    // Cabin accent
+    const cabin = new THREE.Mesh(
+      new THREE.BoxGeometry(0.8, 0.4, 0.8),
+      new THREE.MeshStandardMaterial({ color: 0x7a4e2a, roughness: 0.7 })
+    );
+    cabin.position.set(-0.5, 0.55, 0);
+    boatGroup.add(cabin);
+
+    // Fisherman body
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 0.7, 0.35),
+      new THREE.MeshStandardMaterial({ color: 0xd4a76a })
+    );
+    body.position.set(0.3, 0.8, 0);
+    boatGroup.add(body);
+
+    // Fisherman head
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.2, 12, 8),
+      new THREE.MeshStandardMaterial({ color: 0xf0c8a0 })
+    );
+    head.position.set(0.3, 1.35, 0);
+    boatGroup.add(head);
+
+    // Hat
+    const hat = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.25, 0.28, 0.15, 12),
+      new THREE.MeshStandardMaterial({ color: 0x8B4513 })
+    );
+    hat.position.set(0.3, 1.52, 0);
+    boatGroup.add(hat);
+
+    // Rod
+    const rodGeo = new THREE.CylinderGeometry(0.02, 0.015, 2.2, 6);
+    const rodMesh = new THREE.Mesh(rodGeo, new THREE.MeshStandardMaterial({ color: 0x8B6914 }));
+    rodMesh.position.set(0.6, 1.4, 0);
+    rodMesh.rotation.z = -0.5;
+    boatGroup.add(rodMesh);
+    this.rod = rodMesh;
+
+    this.boat = boatGroup;
+    this.scene.add(boatGroup);
+  },
+
+  buildHook() {
+    // Hook
+    const hookGeo = new THREE.TorusGeometry(0.12, 0.03, 8, 16, Math.PI);
+    const hookMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.1 });
+    this.hookMesh = new THREE.Mesh(hookGeo, hookMat);
+    this.hookMesh.position.set(0, 0, 0);
+    this.hookMesh.rotation.z = Math.PI;
+    this.scene.add(this.hookMesh);
+
+    // Line
+    const lineGeo = new THREE.BufferGeometry();
+    const linePos = new Float32Array(6);
+    lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
+    this.lineMesh = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xaaaaaa, linewidth: 1 }));
+    this.scene.add(this.lineMesh);
+
+    this.hookY = 0.2;
+    this.hookX = 0;
+  },
+
+  buildDepthDark() {
+    const geo = new THREE.PlaneGeometry(80, 80);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x000511, transparent: true, opacity: 0.35,
+      side: THREE.DoubleSide, depthWrite: false
+    });
+    this.depthDarkPlane = new THREE.Mesh(geo, mat);
+    this.depthDarkPlane.position.set(0, -15, -5);
+    this.scene.add(this.depthDarkPlane);
+
+    // Seaweed
+    this.seaweeds = [];
+    for (let i = 0; i < 18; i++) {
+      const h = 1 + Math.random() * 2;
+      const seg = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, h, 0.08),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.3 + Math.random() * 0.1, 0.6, 0.2 + Math.random() * 0.15) })
+      );
+      const sx = (Math.random() - 0.5) * 12;
+      const sy = -(2 + Math.random() * 25);
+      const sz = (Math.random() - 0.5) * 4 - 2;
+      seg.position.set(sx, sy, sz);
+      this.scene.add(seg);
+      this.seaweeds.push({ mesh: seg, baseX: sx, phase: Math.random() * Math.PI * 2 });
+    }
+
+    // Rocks
+    for (let i = 0; i < 12; i++) {
+      const rock = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3 + Math.random() * 0.5, 6, 5),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.08, 0.15, 0.15 + Math.random() * 0.1), roughness: 0.95 })
+      );
+      rock.position.set((Math.random() - 0.5) * 14, -(3 + Math.random() * 25), (Math.random() - 0.5) * 4 - 2);
+      rock.scale.y = 0.5 + Math.random() * 0.5;
+      this.scene.add(rock);
+    }
+
+    // Bubble particles (3D)
+    this.bubbles = [];
+    for (let i = 0; i < 30; i++) {
+      const bubble = new THREE.Mesh(
+        new THREE.SphereGeometry(0.03 + Math.random() * 0.05, 6, 6),
+        new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.3 + Math.random() * 0.3 })
+      );
+      bubble.position.set(
+        (Math.random() - 0.5) * 10,
+        -(Math.random() * 30),
+        (Math.random() - 0.5) * 4
+      );
+      this.scene.add(bubble);
+      this.bubbles.push({ mesh: bubble, speed: 0.3 + Math.random() * 0.5, baseX: bubble.position.x });
+    }
+  },
+
+  getRodTip() {
+    // Approximate world position of rod tip
+    return new THREE.Vector3(1.35, 1.9, 0);
+  },
+
+  updateLine() {
+    const tip = this.getRodTip();
+    const pos = this.lineMesh.geometry.attributes.position.array;
+    pos[0] = tip.x; pos[1] = tip.y; pos[2] = tip.z;
+    pos[3] = this.hookMesh.position.x;
+    pos[4] = this.hookMesh.position.y;
+    pos[5] = this.hookMesh.position.z;
+    this.lineMesh.geometry.attributes.position.needsUpdate = true;
+  },
+
+  // Project world position to screen
+  worldToScreen(worldPos) {
+    const v = worldPos.clone().project(this.camera);
+    return {
+      x: (v.x * 0.5 + 0.5) * window.innerWidth,
+      y: (-v.y * 0.5 + 0.5) * window.innerHeight
+    };
+  },
+
+  // Screen X to world X (approximate at hook depth)
+  screenToWorldX(screenX) {
+    const ndc = (screenX / window.innerWidth) * 2 - 1;
+    const fovRad = this.camera.fov * Math.PI / 180;
+    const dist = this.camera.position.z;
+    const halfWidth = Math.tan(fovRad / 2) * dist * this.camera.aspect;
+    return ndc * halfWidth;
+  },
+
+  onPointerDown(e) {
+    if (GS.state !== 'HOOK_ASCENDING') return;
+    // Don't start drag on buttons
+    if (e.target.tagName === 'BUTTON' || e.target.closest('.upgrade-btn')) return;
+    this.dragActive = true;
+    this.dragStartX = e.clientX;
+    this.hookDragX = this.hookX;
+  },
+
+  onPointerMove(e) {
+    if (!this.dragActive) return;
+    const dx = e.clientX - this.dragStartX;
+    const worldDx = (dx / window.innerWidth) * 10;
+    this.hookX = Math.max(-3.5, Math.min(3.5, this.hookDragX + worldDx));
+  },
+
+  onPointerUp() {
+    this.dragActive = false;
+  },
+
+  onStateChange(oldState, newState) {
+    if (newState === 'HOOK_DESCENDING') {
+      this.hookY = 0.2;
+      this.hookX = 0;
+      this.hookTargetY = -GS.selectedDepth;
+      this.hookSpeed = -1 / 0.35; // units per second (constant feel)
+      this.descending = true;
+      this.ascending = false;
+      this._crossfaded = false;
+      FishSys.spawnPool();
+    }
+    if (newState === 'HOOK_PAUSED') {
+      this.descending = false;
+      this.pauseTimer = GS.round === 1 ? 2.0 : 0.75;
+    }
+    if (newState === 'HOOK_ASCENDING') {
+      this.ascending = true;
+      this.hookSpeed = 2.5; // base upward speed
+    }
+    if (newState === 'SURFACE_SUMMARY') {
+      this.ascending = false;
+    }
+    if (newState === 'ROUND_RESET' || newState === 'IDLE') {
+      this.hookY = 0.2;
+      this.hookX = 0;
+      FishSys.clearAll();
+    }
+  },
+
+  tick(dt) {
+    this.time += dt;
+
+    // Water shader time
+    if (this.waterMesh) {
+      this.waterMesh.material.uniforms.uTime.value = this.time;
+    }
+
+    // Boat bob
+    if (this.boat) {
+      this.boat.position.y = Math.sin(this.time * 1.5) * 0.08;
+      this.boat.rotation.z = Math.sin(this.time * 1.2) * 0.02;
+    }
+
+    // Hook descent
+    if (this.descending) {
+      this.hookY += this.hookSpeed * dt;
+      if (this.hookY <= this.hookTargetY) {
+        this.hookY = this.hookTargetY;
+        GS.transition('HOOK_PAUSED');
+      }
+    }
+
+    // Hook pause
+    if (GS.state === 'HOOK_PAUSED') {
+      this.pauseTimer -= dt;
+      if (this.pauseTimer <= 0) {
+        GS.transition('HOOK_ASCENDING');
+      }
+    }
+
+    // Hook ascent
+    if (this.ascending) {
+      let speed = this.hookSpeed;
+      if (GS.caughtCount >= GS.maxFish) speed *= 3;
+      this.hookY += speed * dt;
+
+      // Check fish catches
+      if (GS.caughtCount < GS.maxFish) {
+        FishSys.checkCatch(this.hookX, this.hookY);
+      }
+
+      // Near surface crossfade
+      if (this.hookY >= -1.5 && !this._crossfaded) {
+        this._crossfaded = true;
+        UIMgr.showCoinCounter();
+      }
+
+      if (this.hookY >= 0.2) {
+        this.hookY = 0.2;
+        this._crossfaded = false;
+        GS.transition('SURFACE_SUMMARY');
+      }
+    }
+
+    // Update hook mesh
+    this.hookMesh.position.set(this.hookX, this.hookY, 0);
+    this.hookMesh.rotation.y = this.time * 0.5;
+
+    // Update line
+    this.updateLine();
+
+    // Camera follow
+    let targetY, targetZ;
+    if (GS.state === 'HOOK_DESCENDING' || GS.state === 'HOOK_PAUSED' || GS.state === 'HOOK_ASCENDING') {
+      targetY = this.hookY + 3;
+      targetZ = 8;
+    } else {
+      targetY = this.cameraRestY;
+      targetZ = this.cameraRestZ;
+    }
+    this.camera.position.y += (targetY - this.camera.position.y) * 0.06;
+    this.camera.position.z += (targetZ - this.camera.position.z) * 0.06;
+    this.camera.lookAt(this.hookX * 0.3, this.camera.position.y - 3, 0);
+
+    // Depth dark plane follows camera
+    if (this.depthDarkPlane) {
+      this.depthDarkPlane.position.y = this.camera.position.y - 18;
+    }
+
+    // Seaweed sway
+    if (this.seaweeds) {
+      for (const sw of this.seaweeds) {
+        sw.mesh.position.x = sw.baseX + Math.sin(this.time * 0.8 + sw.phase) * 0.15;
+        sw.mesh.rotation.z = Math.sin(this.time * 0.6 + sw.phase) * 0.1;
+      }
+    }
+
+    // Bubbles rise
+    if (this.bubbles) {
+      for (const b of this.bubbles) {
+        b.mesh.position.y += b.speed * dt;
+        b.mesh.position.x = b.baseX + Math.sin(this.time * 1.2 + b.mesh.position.y) * 0.15;
+        if (b.mesh.position.y > 1) {
+          b.mesh.position.y = -(5 + Math.random() * 25);
+          b.baseX = (Math.random() - 0.5) * 10;
+        }
+      }
+    }
+
+    // Animate fish
+    FishSys.tick(dt, this.time);
+
+    // Render
+    this.renderer.render(this.scene, this.camera);
   }
-},{passive:false});
-canvas.addEventListener('touchstart', e=>{
-  e.preventDefault();
-  if(e.touches.length>0){
-    inputX = (e.touches[0].clientX / window.innerWidth)*2 - 1;
-    inputActive = true;
+};
+
+// ============================================================
+// FISH SYSTEM
+// ============================================================
+const FishSys = {
+  pool: [],
+
+  rarityTable: [
+    { rarity: 'common',    weight: 55, minDepth: 0,  valueMin: 5,   valueMax: 15,  label: null,        color: 0x8899aa },
+    { rarity: 'uncommon',  weight: 25, minDepth: 5,  valueMin: 20,  valueMax: 40,  label: null,        color: 0x2ecc71 },
+    { rarity: 'rare',      weight: 12, minDepth: 10, valueMin: 60,  valueMax: 100, label: 'RARE!',     color: 0xe67e22 },
+    { rarity: 'amazing',   weight: 6,  minDepth: 15, valueMin: 150, valueMax: 250, label: 'AMAZING!',  color: 0xf1c40f },
+    { rarity: 'legendary', weight: 2,  minDepth: 20, valueMin: 400, valueMax: 600, label: 'LEGENDARY!',color: 0xe74c3c }
+  ],
+
+  rollRarity(selectedDepth) {
+    const eligible = this.rarityTable.filter(r => selectedDepth >= r.minDepth);
+    const totalWeight = eligible.reduce((s, r) => s + r.weight, 0);
+    let roll = Math.random() * totalWeight;
+    for (const r of eligible) {
+      roll -= r.weight;
+      if (roll <= 0) return r;
+    }
+    return eligible[0];
+  },
+
+  createFishMesh(rarityInfo) {
+    const group = new THREE.Group();
+    const r = rarityInfo.rarity;
+
+    if (r === 'common') {
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.2, 0.15),
+        new THREE.MeshStandardMaterial({ color: rarityInfo.color })
+      );
+      const tail = new THREE.Mesh(
+        new THREE.ConeGeometry(0.12, 0.2, 4),
+        new THREE.MeshStandardMaterial({ color: rarityInfo.color })
+      );
+      tail.position.x = -0.32; tail.rotation.z = Math.PI / 2;
+      group.add(body, tail);
+    } else if (r === 'uncommon') {
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.6, 0.25, 0.18),
+        new THREE.MeshStandardMaterial({ color: rarityInfo.color })
+      );
+      const tail = new THREE.Mesh(
+        new THREE.ConeGeometry(0.15, 0.22, 4),
+        new THREE.MeshStandardMaterial({ color: rarityInfo.color })
+      );
+      tail.position.x = -0.38; tail.rotation.z = Math.PI / 2;
+      group.add(body, tail);
+    } else if (r === 'rare') {
+      const body = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2, 10, 8),
+        new THREE.MeshStandardMaterial({ color: rarityInfo.color, emissive: 0x331100, emissiveIntensity: 0.3 })
+      );
+      const tail = new THREE.Mesh(
+        new THREE.ConeGeometry(0.15, 0.35, 6),
+        new THREE.MeshStandardMaterial({ color: rarityInfo.color })
+      );
+      tail.position.x = -0.32; tail.rotation.z = Math.PI / 2;
+      group.add(body, tail);
+    } else if (r === 'amazing') {
+      const body = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 12, 10),
+        new THREE.MeshStandardMaterial({ color: rarityInfo.color, emissive: 0x443300, emissiveIntensity: 0.5 })
+      );
+      const tail = new THREE.Mesh(
+        new THREE.ConeGeometry(0.17, 0.35, 6),
+        new THREE.MeshStandardMaterial({ color: rarityInfo.color })
+      );
+      tail.position.x = -0.35; tail.rotation.z = Math.PI / 2;
+      const halo = new THREE.Mesh(
+        new THREE.RingGeometry(0.3, 0.35, 24),
+        new THREE.MeshBasicMaterial({ color: 0xf1c40f, side: THREE.DoubleSide, transparent: true, opacity: 0.6 })
+      );
+      group.add(body, tail, halo);
+      group.userData.halo = halo;
+    } else { // legendary
+      const body = new THREE.Mesh(
+        new THREE.SphereGeometry(0.28, 14, 12),
+        new THREE.MeshStandardMaterial({ color: 0xff4444, emissive: 0x440000, emissiveIntensity: 0.6 })
+      );
+      const tail = new THREE.Mesh(
+        new THREE.ConeGeometry(0.2, 0.4, 8),
+        new THREE.MeshStandardMaterial({ color: 0xff6644 })
+      );
+      tail.position.x = -0.42; tail.rotation.z = Math.PI / 2;
+      const fin1 = new THREE.Mesh(
+        new THREE.ConeGeometry(0.1, 0.3, 4),
+        new THREE.MeshStandardMaterial({ color: 0xff8866 })
+      );
+      fin1.position.y = 0.25; fin1.rotation.z = 0;
+      const glow = new THREE.PointLight(0xff4444, 1.5, 3);
+      group.add(body, tail, fin1, glow);
+      group.userData.glow = glow;
+      group.userData.bodyMat = body.material;
+    }
+
+    // Eye (universal)
+    const eye = new THREE.Mesh(
+      new THREE.SphereGeometry(0.04, 6, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    eye.position.set(0.15, 0.05, 0.08);
+    const pupil = new THREE.Mesh(
+      new THREE.SphereGeometry(0.025, 6, 6),
+      new THREE.MeshBasicMaterial({ color: 0x000000 })
+    );
+    pupil.position.set(0.17, 0.05, 0.1);
+    group.add(eye, pupil);
+
+    return group;
+  },
+
+  spawnPool() {
+    this.clearAll();
+    const depth = GS.selectedDepth;
+    // Spawn more fish than maxFish to give variety
+    const count = GS.maxFish + Math.floor(GS.maxFish * 0.8) + 3;
+
+    for (let i = 0; i < count; i++) {
+      const rarityInfo = this.rollRarity(depth);
+      const mesh = this.createFishMesh(rarityInfo);
+
+      const fx = (Math.random() - 0.5) * 6;
+      const fz = (Math.random() - 0.5) * 2;
+      let fy;
+      if (rarityInfo.minDepth > 0) {
+        fy = -(rarityInfo.minDepth + Math.random() * (depth - rarityInfo.minDepth));
+      } else {
+        fy = -(1 + Math.random() * (depth - 1));
+      }
+      fy = Math.max(fy, -depth);
+
+      mesh.position.set(fx, fy, fz);
+      mesh.visible = false;
+      SceneMgr.scene.add(mesh);
+
+      const value = Math.floor(rarityInfo.valueMin + Math.random() * (rarityInfo.valueMax - rarityInfo.valueMin));
+
+      this.pool.push({
+        id: i,
+        rarity: rarityInfo.rarity,
+        rarityInfo,
+        value,
+        label: rarityInfo.label,
+        mesh,
+        worldPos: new THREE.Vector3(fx, fy, fz),
+        caught: false,
+        catchEffectPlayed: false,
+        swimDir: Math.random() > 0.5 ? 1 : -1,
+        swimSpeed: 0.3 + Math.random() * 0.4
+      });
+    }
+  },
+
+  clearAll() {
+    for (const f of this.pool) {
+      SceneMgr.scene.remove(f.mesh);
+    }
+    this.pool = [];
+  },
+
+  tick(dt, time) {
+    const hookY = SceneMgr.hookY;
+    for (const f of this.pool) {
+      if (f.caught) {
+        // Follow hook
+        if (!f.catchEffectPlayed) continue;
+        f.mesh.position.x = SceneMgr.hookMesh.position.x + (f.id % 3 - 1) * 0.3;
+        f.mesh.position.y = SceneMgr.hookMesh.position.y - 0.3 - (f.id % 2) * 0.25;
+        continue;
+      }
+
+      // Visibility: show when hook is near
+      const camY = SceneMgr.camera.position.y;
+      if (Math.abs(f.worldPos.y - camY) < 8) {
+        f.mesh.visible = true;
+      }
+
+      // Idle swim
+      f.mesh.position.x = f.worldPos.x + Math.sin(time * f.swimSpeed + f.id) * 0.8 * f.swimDir;
+      f.mesh.position.y = f.worldPos.y + Math.sin(time * 0.6 + f.id * 2.1) * 0.05;
+      f.mesh.rotation.y = f.swimDir > 0 ? 0 : Math.PI;
+
+      // Halo spin (amazing)
+      if (f.mesh.userData.halo) {
+        f.mesh.userData.halo.rotation.x = time * 2;
+        f.mesh.userData.halo.rotation.y = time * 1.5;
+      }
+      // Legendary glow hue shift
+      if (f.mesh.userData.bodyMat) {
+        const hue = (time * 0.3 + f.id) % 1;
+        f.mesh.userData.bodyMat.emissive.setHSL(hue, 0.8, 0.2);
+        if (f.mesh.userData.glow) f.mesh.userData.glow.color.setHSL(hue, 0.8, 0.5);
+      }
+    }
+  },
+
+  checkCatch(hookX, hookY) {
+    for (const f of this.pool) {
+      if (f.caught) continue;
+      const dx = f.mesh.position.x - hookX;
+      const dy = f.mesh.position.y - hookY;
+      const dz = f.mesh.position.z;
+      const dist2D = Math.sqrt(dx * dx + dz * dz);
+      if (dist2D < 0.8 && Math.abs(dy) < 0.6) {
+        this.catchFish(f);
+      }
+    }
+  },
+
+  catchFish(f) {
+    f.caught = true;
+    f.catchEffectPlayed = true;
+    GS.caughtFish.push(f);
+    GS.caughtCount++;
+
+    // Sound
+    const rateMap = { common: 1.0, uncommon: 1.0, rare: 1.1, amazing: 1.2, legendary: 1.4 };
+    AudioMgr.playCatch(rateMap[f.rarity] || 1.0);
+
+    // VFX
+    const screenPos = SceneMgr.worldToScreen(f.mesh.position);
+    VFX.emitCatch(screenPos.x, screenPos.y, f.rarity);
+
+    // Update UI
+    UIMgr.updateFishCount();
+
+    // Label popup
+    if (f.label) {
+      UIMgr.showAttaboy(f.label, f.rarity, screenPos.x, screenPos.y);
+    }
+
+    // Rarity screen effects
+    if (f.rarity === 'rare') {
+      document.getElementById('edge-flash').classList.add('flash');
+      setTimeout(() => document.getElementById('edge-flash').classList.remove('flash'), 200);
+    }
+    if (f.rarity === 'amazing') {
+      UIMgr.screenShake(3);
+      document.getElementById('edge-flash').classList.add('flash');
+      setTimeout(() => document.getElementById('edge-flash').classList.remove('flash'), 250);
+    }
+    if (f.rarity === 'legendary') {
+      UIMgr.screenShake(6);
+      document.getElementById('screen-flash').classList.add('flash');
+      setTimeout(() => document.getElementById('screen-flash').classList.remove('flash'), 300);
+    }
   }
-  AudioManager.init();
-},{passive:false});
-canvas.addEventListener('mousedown', ()=>{ AudioManager.init(); });
+};
 
-// ─── PHASE MANAGEMENT ────────────────────────────────────
-let hookSpeed = 3.5;
-let collisionsEnabled = true;
-let pauseTimer = 0;
-let surfaceTimer = 0;
-let summaryTimer = 0;
-let summaryStep = 0;
+// ============================================================
+// VFX SYSTEM (Canvas 2D overlay)
+// ============================================================
+const VFX = {
+  canvas: null, ctx: null,
+  particles: [],
+  maxParticles: 300,
 
-function setPhase(p){
-  GS.phase = p;
-  // Hide everything first
-  gaugeWrap.style.display = 'none';
-  playBtn.style.display = 'none';
-  upgPanel.style.display = 'none';
-  fishCounter.style.display = 'none';
-  tutorialEl.style.display = 'none';
-  titleArea.style.display = 'none';
-  summaryOv.style.display = 'none';
-  endScreen.style.display = 'none';
+  init() {
+    this.canvas = document.getElementById('vfx');
+    this.ctx = this.canvas.getContext('2d');
+    this.resize();
+    // Pre-allocate
+    for (let i = 0; i < this.maxParticles; i++) {
+      this.particles.push({ alive: false, x:0, y:0, vx:0, vy:0, life:0, maxLife:1, radius:3, color:'#fff', alpha:1 });
+    }
+  },
 
-  switch(p){
-    case 'IDLE':
-      gaugeWrap.style.display = 'block';
-      playBtn.style.display = 'block';
-      upgPanel.style.display = 'flex';
-      titleArea.style.display = 'block';
-      updateUpgradeUI();
-      cameraTarget.y = 2; cameraTarget.z = 10;
-      hookGroup.position.set(0,0.5,0);
-      fishermanGroup.visible = true;
-      break;
-    case 'CASTING':
-      GS.selectedDepth = Math.round(lerp(2, GS.maxDepth, GS.needleNorm));
-      GS.currentFishCount = 0;
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  },
+
+  getParticle() {
+    for (const p of this.particles) {
+      if (!p.alive) return p;
+    }
+    return null; // pool exhausted
+  },
+
+  emit(x, y, count, config) {
+    for (let i = 0; i < count; i++) {
+      const p = this.getParticle();
+      if (!p) return;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = config.speed ? (config.speed * (0.5 + Math.random() * 0.5)) : (60 + Math.random() * 100);
+      p.alive = true;
+      p.x = x + (Math.random() - 0.5) * 10;
+      p.y = y + (Math.random() - 0.5) * 10;
+      p.vx = Math.cos(angle) * speed;
+      p.vy = Math.sin(angle) * speed;
+      p.gravity = config.gravity || 80;
+      p.life = config.life || 0.8;
+      p.maxLife = p.life;
+      p.radius = config.radius || (2 + Math.random() * 3);
+      p.color = config.color || '#fff';
+      p.alpha = 1;
+    }
+  },
+
+  emitCatch(x, y, rarity) {
+    const configs = {
+      common:    { count: 8,  color: '#ffffff', speed: 80, life: 0.5, radius: 2 },
+      uncommon:  { count: 12, color: '#2ecc71', speed: 100, life: 0.6, radius: 3 },
+      rare:      { count: 20, color: '#e67e22', speed: 130, life: 0.7, radius: 3.5 },
+      amazing:   { count: 35, color: '#f1c40f', speed: 160, life: 0.8, radius: 4 },
+      legendary: { count: 60, color: '#ff4444', speed: 200, life: 1.0, radius: 5 }
+    };
+    const c = configs[rarity] || configs.common;
+    this.emit(x, y, c.count, c);
+  },
+
+  emitCoins(x, y, count) {
+    this.emit(x, y, count || 15, { color: '#ffd700', speed: 120, life: 0.7, radius: 3.5, gravity: 100 });
+  },
+
+  tick(dt) {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    for (const p of this.particles) {
+      if (!p.alive) continue;
+      p.life -= dt;
+      if (p.life <= 0) { p.alive = false; continue; }
+      p.vy += p.gravity * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.alpha = Math.max(0, p.life / p.maxLife);
+
+      this.ctx.save();
+      this.ctx.globalAlpha = p.alpha;
+      this.ctx.fillStyle = p.color;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius * (0.5 + p.alpha * 0.5), 0, Math.PI * 2);
+      this.ctx.fill();
+      // Glow
+      this.ctx.globalAlpha = p.alpha * 0.3;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius * 2, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
+    }
+  }
+};
+
+// ============================================================
+// UI MANAGER
+// ============================================================
+const UIMgr = {
+  shakeFrames: 0,
+
+  showCoinCounter() {
+    document.getElementById('coin-display').classList.remove('hidden');
+    document.getElementById('fish-display').classList.remove('visible');
+  },
+
+  showFishCounter() {
+    document.getElementById('coin-display').classList.add('hidden');
+    document.getElementById('fish-display').classList.add('visible');
+  },
+
+  updateCoins() {
+    document.getElementById('coin-text').textContent = GS.coins;
+    document.getElementById('coin-display').classList.add('pulse');
+    setTimeout(() => document.getElementById('coin-display').classList.remove('pulse'), 300);
+  },
+
+  updateFishCount() {
+    document.getElementById('fish-count-text').textContent = `${GS.caughtCount} / ${GS.maxFish}`;
+    const pct = (GS.caughtCount / GS.maxFish) * 100;
+    document.getElementById('fish-bar').style.width = pct + '%';
+  },
+
+  renderUpgrades() {
+    const fishUpg = GS.upgrades.maxFish;
+    const depthUpg = GS.upgrades.maxDepth;
+    const fishBtn = document.getElementById('upgrade-fish');
+    const depthBtn = document.getElementById('upgrade-depth');
+
+    if (fishUpg.current >= fishUpg.levels.length - 1) {
+      fishBtn.innerHTML = `<div>🐟 Max Fish</div><div class="level">MAX (${GS.maxFish})</div>`;
+      fishBtn.classList.add('disabled');
+    } else {
+      const nextLvl = fishUpg.current + 1;
+      const cost = fishUpg.costs[nextLvl];
+      const nextVal = fishUpg.levels[nextLvl];
+      fishBtn.innerHTML = `<div>🐟 Max Fish</div><div class="level">${GS.maxFish} → ${nextVal}</div><div class="cost"><div class="mini-coin"></div> ${cost}</div>`;
+      if (GS.coins >= cost) { fishBtn.classList.remove('disabled'); } else { fishBtn.classList.add('disabled'); }
+    }
+
+    if (depthUpg.current >= depthUpg.levels.length - 1) {
+      depthBtn.innerHTML = `<div>⚓ Max Depth</div><div class="level">MAX (${GS.maxDepth}m)</div>`;
+      depthBtn.classList.add('disabled');
+    } else {
+      const nextLvl = depthUpg.current + 1;
+      const cost = depthUpg.costs[nextLvl];
+      const nextVal = depthUpg.levels[nextLvl];
+      depthBtn.innerHTML = `<div>⚓ Max Depth</div><div class="level">${GS.maxDepth}m → ${nextVal}m</div><div class="cost"><div class="mini-coin"></div> ${cost}</div>`;
+      if (GS.coins >= cost) { depthBtn.classList.remove('disabled'); } else { depthBtn.classList.add('disabled'); }
+    }
+  },
+
+  showAttaboy(text, rarity, x, y) {
+    const el = document.createElement('div');
+    el.className = 'attaboy-label';
+    const colorMap = { rare: '#e67e22', amazing: '#f1c40f', legendary: '#ff4444' };
+    el.style.cssText = `left:${x}px; top:${y - 40}px; font-size:${rarity === 'legendary' ? 36 : 28}px; color:${colorMap[rarity] || '#fff'};`;
+    el.textContent = text;
+    document.getElementById('ui').appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  },
+
+  showFloatLabel(text, x, y, color, size) {
+    const el = document.createElement('div');
+    el.className = 'float-label';
+    el.style.cssText = `left:${x}px; top:${y}px; font-size:${size || 22}px; color:${color || '#ffd700'};`;
+    el.textContent = text;
+    document.getElementById('ui').appendChild(el);
+    setTimeout(() => el.remove(), 800);
+  },
+
+  flyCoinsToCounter(fromX, fromY, count) {
+    const target = document.getElementById('coin-display').getBoundingClientRect();
+    const tx = target.left + target.width / 2;
+    const ty = target.top + target.height / 2;
+
+    for (let i = 0; i < Math.min(count, 8); i++) {
+      const coin = document.createElement('div');
+      coin.className = 'fly-coin';
+      coin.style.left = fromX + 'px';
+      coin.style.top = fromY + 'px';
+      document.getElementById('ui').appendChild(coin);
+
+      const delay = i * 60;
+      const midX = fromX + (Math.random() - 0.5) * 80;
+      const midY = fromY - 40 - Math.random() * 60;
+
+      setTimeout(() => {
+        coin.style.transition = 'left 0.3s ease-in, top 0.3s ease-in';
+        coin.style.left = midX + 'px';
+        coin.style.top = midY + 'px';
+        setTimeout(() => {
+          coin.style.transition = 'left 0.3s ease-in, top 0.3s ease-in, opacity 0.1s';
+          coin.style.left = tx + 'px';
+          coin.style.top = ty + 'px';
+          setTimeout(() => {
+            coin.style.opacity = '0';
+            setTimeout(() => coin.remove(), 100);
+          }, 280);
+        }, 300);
+      }, delay);
+    }
+  },
+
+  screenShake(frames) {
+    this.shakeFrames = frames;
+  },
+
+  tickShake() {
+    const uiEl = document.getElementById('ui');
+    if (this.shakeFrames > 0) {
+      const ox = (Math.random() - 0.5) * 8;
+      const oy = (Math.random() - 0.5) * 8;
+      uiEl.style.transform = `translate(${ox}px, ${oy}px)`;
+      this.shakeFrames--;
+    } else {
+      uiEl.style.transform = '';
+    }
+  },
+
+  onStateChange(oldState, newState) {
+    if (newState === 'IDLE' || newState === 'SHOP') {
+      this.showCoinCounter();
+      document.getElementById('bottom-area').classList.remove('hidden');
+      document.getElementById('controls').classList.remove('hidden');
+      document.getElementById('upgrades').classList.remove('hidden');
+      this.renderUpgrades();
+    }
+    if (newState === 'GAUGE_ACTIVE') {
+      // Gauge is always active in IDLE/SHOP
+    }
+    if (newState === 'HOOK_DESCENDING') {
+      document.getElementById('bottom-area').classList.add('hidden');
+      this.showFishCounter();
+      GS.caughtCount = 0;
       GS.caughtFish = [];
-      GS.roundEarnings = 0;
-      hookSpeed = 3.5;
-      collisionsEnabled = true;
-      fishCounter.style.display = 'block';
-      updateFishCounter();
-      spawnFish(GS.selectedDepth, Math.round(GS.maxFish * 2.5));
-      AudioManager.playCast();
-      setTimeout(()=>setPhase('DESCENDING'), 400);
-      break;
-    case 'DESCENDING':
-      fishCounter.style.display = 'block';
-      break;
-    case 'PAUSED':
-      fishCounter.style.display = 'block';
-      pauseTimer = GS.round===1 ? 2.0 : 0.7;
-      if(GS.round===1) tutorialEl.style.display = 'block';
-      break;
-    case 'ASCENDING':
-      fishCounter.style.display = 'block';
-      tutorialEl.style.display = 'none';
-      break;
-    case 'SURFACING':
-      surfaceTimer = 0;
-      AudioManager.playSplash();
-      break;
-    case 'SUMMARY':
-      summaryOv.style.display = 'block';
-      summaryTimer = 0;
-      summaryStep = 0;
-      showSummary();
-      break;
-    case 'END':
-      endScreen.style.display = 'flex';
-      endTotal.textContent = GS.totalEarned;
-      AudioManager.playFanfare();
-      break;
-  }
-}
-
-// ─── UPDATE LOOP ─────────────────────────────────────────
-const clock = new THREE.Clock();
-
-function gameLoop(){
-  requestAnimationFrame(gameLoop);
-  const dt = Math.min(clock.getDelta(), 0.05);
-  const t = clock.getElapsedTime();
-
-  // Water animation
-  animateWater(t);
-  animateBubbles(t,dt);
-  animateFish(t);
-  updateParticles(dt);
-
-  // Phase-specific logic
-  switch(GS.phase){
-    case 'IDLE':
-      updateNeedle(dt);
-      break;
-
-    case 'DESCENDING':
-      hookGroup.position.y -= hookSpeed * dt;
-      // Camera follows
-      cameraTarget.y = hookGroup.position.y + 1.5;
-      // Reached target depth?
-      if(hookGroup.position.y <= -GS.selectedDepth){
-        hookGroup.position.y = -GS.selectedDepth;
-        setPhase('PAUSED');
-      }
-      break;
-
-    case 'PAUSED':
-      pauseTimer -= dt;
-      if(pauseTimer<=0) setPhase('ASCENDING');
-      break;
-
-    case 'ASCENDING':
-      hookGroup.position.y += hookSpeed * dt;
-      // Lateral movement
-      if(inputActive){
-        const targetX = inputX * 3.5;
-        hookGroup.position.x = lerp(hookGroup.position.x, targetX, 0.08);
-        hookGroup.position.x = Math.max(-3.5, Math.min(3.5, hookGroup.position.x));
-      }
-      cameraTarget.y = hookGroup.position.y + 1.5;
-      // Move attached fish with hook
-      for(const f of GS.caughtFish){
-        f.mesh.position.x = hookGroup.position.x + f.attachOffset.x;
-        f.mesh.position.y = hookGroup.position.y + f.attachOffset.y;
-      }
-      // Collisions
-      if(collisionsEnabled) checkCollisions();
-      // Surface?
-      if(hookGroup.position.y >= 0.5){
-        setPhase('SURFACING');
-      }
-      break;
-
-    case 'SURFACING':
-      surfaceTimer += dt;
-      // Bounce animation
-      hookGroup.position.y = 0.5 + Math.abs(Math.sin(surfaceTimer*6))*Math.max(0,1-surfaceTimer*0.8)*1.5;
-      for(const f of GS.caughtFish){
-        f.mesh.position.y = hookGroup.position.y + f.attachOffset.y;
-        f.mesh.position.x = hookGroup.position.x + f.attachOffset.x;
-      }
-      cameraTarget.y = 2;
-      if(surfaceTimer > 1.5) setPhase('SUMMARY');
-      break;
-  }
-
-  // Camera follow with lerp
-  camera.position.x = lerp(camera.position.x, cameraTarget.x, 0.05);
-  camera.position.y = lerp(camera.position.y, cameraTarget.y, 0.06);
-  camera.position.z = lerp(camera.position.z, cameraTarget.z, 0.05);
-
-  // Camera shake
-  if(shakeAmount>0.01){
-    camera.position.x += (Math.random()-0.5)*shakeAmount;
-    camera.position.y += (Math.random()-0.5)*shakeAmount;
-    shakeAmount *= 0.88;
-  }
-
-  camera.lookAt(hookGroup.position.x*0.3, camera.position.y-2, 0);
-
-  // Update depth-based visuals
-  const depthNorm = Math.max(0, Math.min(1, -hookGroup.position.y / 30));
-  scene.background.setHex(lerpColor(0x1a6a9a, 0x020810, depthNorm));
-  scene.fog.density = 0.03 + depthNorm * 0.04;
-  sunLight.intensity = Math.max(0.1, 1.0 - depthNorm * 1.5);
-  hookLight.intensity = depthNorm * 2.5;
-  hookLight.position.copy(hookGroup.position);
-
-  updateLine();
-  renderer.render(scene, camera);
-}
-
-function lerpColor(c1, c2, t){
-  const r1=(c1>>16)&0xff, g1=(c1>>8)&0xff, b1=c1&0xff;
-  const r2=(c2>>16)&0xff, g2=(c2>>8)&0xff, b2=c2&0xff;
-  const r=Math.round(lerp(r1,r2,t)), g=Math.round(lerp(g1,g2,t)), b=Math.round(lerp(b1,b2,t));
-  return (r<<16)|(g<<8)|b;
-}
-
-// ─── SUMMARY SEQUENCE ────────────────────────────────────
-async function showSummary(){
-  let totalRoundCoins = 0;
-  for(let i=0;i<GS.caughtFish.length;i++){
-    const f = GS.caughtFish[i];
-    totalRoundCoins += f.type.value;
-    await delay(300);
-    // Show popup at fish screen pos
-    const sp = toScreen(f.mesh.position);
-    const popup = document.createElement('div');
-    popup.className = 'fish-popup';
-    popup.style.left = sp.x+'px'; popup.style.top = sp.y+'px';
-    popup.innerHTML = `<div class="value">+${f.type.value}</div>`;
-    if(f.type.rarity){
-      const cls = f.type.rarity==='Rare!'?'rarity-rare':
-        f.type.rarity==='Amazing!'?'rarity-amazing':
-        f.type.rarity==='Legendary!'?'rarity-legendary':'rarity-jackpot';
-      popup.innerHTML += `<div class="rarity ${cls}">${f.type.rarity}</div>`;
+      this.updateFishCount();
+      document.getElementById('depth-indicator').style.opacity = '1';
     }
-    $('ui').appendChild(popup);
-    spawnCoinBurst(f.mesh.position.clone());
-    AudioManager.playCoin();
-    setTimeout(()=>popup.remove(), 800);
-  }
-  // Fly coins to counter
-  await delay(600);
-  const counterRect = $('coin-counter').getBoundingClientRect();
-  for(let i=0;i<Math.min(totalRoundCoins/5, 12);i++){
-    const coin = document.createElement('div');
-    coin.className = 'flying-coin';
-    const startX = window.innerWidth/2 + (Math.random()-0.5)*100;
-    const startY = window.innerHeight/2 + (Math.random()-0.5)*60;
-    coin.style.left = startX+'px';
-    coin.style.top = startY+'px';
-    $('ui').appendChild(coin);
-    coin.animate([
-      {left:startX+'px', top:startY+'px', opacity:1},
-      {left:counterRect.left+counterRect.width/2+'px', top:counterRect.top+counterRect.height/2+'px', opacity:0.5}
-    ], {duration:500+i*50, easing:'ease-in', fill:'forwards'});
-    setTimeout(()=>{coin.remove(); AudioManager.playCoin();}, 500+i*50);
-  }
-  await delay(800);
-  GS.coins += totalRoundCoins;
-  GS.totalEarned += totalRoundCoins;
-  updateCoinCounter();
-  AudioManager.playFanfare();
+    if (newState === 'HOOK_PAUSED') {
+      if (GS.round === 1) {
+        const toast = document.getElementById('tutorial-toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1800);
+      }
+    }
+    if (newState === 'SURFACE_SUMMARY') {
+      document.getElementById('depth-indicator').style.opacity = '0';
+      this.runSummary();
+    }
+    if (newState === 'ROUND_RESET') {
+      GS.round++;
+      GS.caughtCount = 0;
+      GS.caughtFish = [];
+      document.getElementById('fish-bar').style.width = '0%';
+      this.showCoinCounter();
+      document.getElementById('bottom-area').classList.remove('hidden');
+      document.getElementById('controls').classList.remove('hidden');
+      document.getElementById('upgrades').classList.remove('hidden');
+      this.renderUpgrades();
+    }
+    if (newState === 'END_SCREEN') {
+      AudioMgr.stopMusic();
+      document.getElementById('bottom-area').classList.add('hidden');
+      document.getElementById('end-screen').classList.add('visible');
+    }
+  },
 
-  await delay(1200);
-  // Next round or end
-  if(GS.round < 3){
-    GS.round++;
-    roundNum.textContent = GS.round;
-    clearFish();
-    hookGroup.position.set(0,0.5,0);
-    setPhase('IDLE');
-  } else {
-    setPhase('END');
+  async runSummary() {
+    // Wait for camera to settle
+    await sleep(800);
+
+    const fish = GS.caughtFish;
+    let totalCoins = 0;
+
+    if (fish.length === 0) {
+      // No fish caught
+      const summaryEl = document.getElementById('summary');
+      const totalEl = document.getElementById('summary-total');
+      totalEl.textContent = 'NO FISH...';
+      totalEl.style.color = '#888';
+      summaryEl.classList.add('visible');
+      await sleep(100);
+      totalEl.classList.add('show');
+      await sleep(1500);
+      summaryEl.classList.remove('visible');
+      totalEl.classList.remove('show');
+      totalEl.style.color = '';
+    } else {
+      for (let i = 0; i < fish.length; i++) {
+        const f = fish[i];
+        totalCoins += f.value;
+
+        // Spring scale animation on mesh
+        const mesh = f.mesh;
+        const springAnim = [1.4, 0.9, 1.1, 1.0];
+        for (const s of springAnim) {
+          mesh.scale.set(s, s, s);
+          await sleep(75);
+        }
+
+        // Coin burst VFX
+        const sp = SceneMgr.worldToScreen(mesh.position);
+        VFX.emitCoins(sp.x, sp.y, 12);
+
+        // Value label
+        const labelColor = f.rarity === 'legendary' ? '#ff4444' : f.rarity === 'amazing' ? '#f1c40f' : f.rarity === 'rare' ? '#e67e22' : '#ffd700';
+        const labelSize = f.rarity === 'legendary' ? 32 : f.rarity === 'amazing' ? 28 : 22;
+        UIMgr.showFloatLabel(`+${f.value}`, sp.x, sp.y - 20, labelColor, labelSize);
+
+        // Attaboy for rarity
+        if (f.label) {
+          await sleep(150);
+          UIMgr.showAttaboy(f.label, f.rarity, sp.x, sp.y - 60);
+          if (f.rarity === 'legendary') {
+            document.getElementById('screen-flash').classList.add('flash');
+            setTimeout(() => document.getElementById('screen-flash').classList.remove('flash'), 300);
+            UIMgr.screenShake(4);
+          }
+        }
+
+        AudioMgr.playCoinJingle();
+        await sleep(300);
+      }
+
+      // Total summary
+      await sleep(300);
+      this.showCoinCounter();
+      const summaryEl = document.getElementById('summary');
+      const totalEl = document.getElementById('summary-total');
+      totalEl.textContent = `+${totalCoins} COINS!`;
+      summaryEl.classList.add('visible');
+      await sleep(100);
+      totalEl.classList.add('show');
+
+      // Fly coins to counter
+      const totalRect = totalEl.getBoundingClientRect();
+      this.flyCoinsToCounter(totalRect.left + totalRect.width/2, totalRect.top, Math.min(totalCoins / 10, 10));
+
+      await sleep(600);
+      GS.coins += totalCoins;
+      this.updateCoins();
+
+      await sleep(1200);
+      summaryEl.classList.remove('visible');
+      totalEl.classList.remove('show');
+    }
+
+    // Next state
+    if (GS.round < 3) {
+      GS.transition('ROUND_RESET');
+    } else {
+      GS.transition('END_SCREEN');
+    }
   }
-}
-
-function delay(ms){return new Promise(r=>setTimeout(r,ms));}
-
-// ─── UI HELPERS ──────────────────────────────────────────
-function updateCoinCounter(){
-  coinVal.textContent = GS.coins;
-  coinVal.style.color = '#ffe066';
-  setTimeout(()=>coinVal.style.color='#f0c040', 200);
-}
-
-function updateFishCounter(){
-  fishVal.textContent = GS.currentFishCount;
-  fishMax.textContent = GS.maxFish;
-}
-
-function updateUpgradeUI(){
-  // Fish upgrade
-  const fl = GS.fishLevel;
-  const fCard = $('upg-fish');
-  if(fl < MAX_FISH_UPGRADES.length){
-    const u = MAX_FISH_UPGRADES[fl];
-    $('upg-fish-val').textContent = `${GS.maxFish} → ${u.fish}`;
-    $('upg-fish-cost').textContent = `💰 ${u.cost}`;
-    fCard.classList.toggle('disabled', GS.coins < u.cost);
-  } else {
-    $('upg-fish-val').textContent = `${GS.maxFish} MAX`;
-    $('upg-fish-cost').textContent = '';
-    fCard.classList.add('disabled');
-  }
-  // Depth upgrade
-  const dl = GS.depthLevel;
-  const dCard = $('upg-depth');
-  if(dl < MAX_DEPTH_UPGRADES.length){
-    const u = MAX_DEPTH_UPGRADES[dl];
-    $('upg-depth-val').textContent = `${GS.maxDepth}m → ${u.depth}m`;
-    $('upg-depth-cost').textContent = `💰 ${u.cost}`;
-    dCard.classList.toggle('disabled', GS.coins < u.cost);
-  } else {
-    $('upg-depth-val').textContent = `${GS.maxDepth}m MAX`;
-    $('upg-depth-cost').textContent = '';
-    dCard.classList.add('disabled');
-  }
-}
-
-// ─── GLOBAL FUNCTIONS (called from onclick) ──────────────
-window.doUpgrade = function(type){
-  AudioManager.init();
-  if(type==='fish'){
-    if(GS.fishLevel >= MAX_FISH_UPGRADES.length) return;
-    const u = MAX_FISH_UPGRADES[GS.fishLevel];
-    if(GS.coins < u.cost) return;
-    GS.coins -= u.cost;
-    GS.maxFish = u.fish;
-    GS.fishLevel++;
-    AudioManager.playCoin();
-  } else {
-    if(GS.depthLevel >= MAX_DEPTH_UPGRADES.length) return;
-    const u = MAX_DEPTH_UPGRADES[GS.depthLevel];
-    if(GS.coins < u.cost) return;
-    GS.coins -= u.cost;
-    GS.maxDepth = u.depth;
-    GS.depthLevel++;
-    AudioManager.playCoin();
-  }
-  updateCoinCounter();
-  updateUpgradeUI();
 };
 
-window.startCast = function(){
-  AudioManager.init();
-  if(GS.phase!=='IDLE') return;
-  setPhase('CASTING');
+// ============================================================
+// GAUGE SYSTEM
+// ============================================================
+const Gauge = {
+  angle: 0,       // -90 to 90 degrees (mapped to SVG rotation)
+  speed: 2.2,     // radians per second base, increases per round
+  frozen: false,
+  elapsed: 0,
+
+  tick(dt) {
+    if (this.frozen) return;
+    this.elapsed += dt;
+    // Speed increases with round
+    const roundSpeed = this.speed + (GS.round - 1) * 0.4;
+    this.angle = Math.sin(this.elapsed * roundSpeed) * 85; // degrees, -85 to 85
+    // Update SVG pointer
+    document.getElementById('gauge-pointer').setAttribute('transform', `rotate(${this.angle}, 100, 100)`);
+  },
+
+  freeze() {
+    this.frozen = true;
+    // Map angle to depth: center (0°) = maxDepth, edges (±85°) = minDepth (1m)
+    const normalized = 1 - Math.abs(this.angle) / 85; // 0 at edges, 1 at center
+    const depth = 1 + normalized * (GS.maxDepth - 1);
+    GS.selectedDepth = Math.round(depth * 10) / 10;
+  },
+
+  reset() {
+    this.frozen = false;
+  }
 };
 
-window.restartGame = function(){
-  GS.coins = 100; GS.round = 1; GS.maxFish = 6; GS.maxDepth = 5;
-  GS.fishLevel = 0; GS.depthLevel = 0; GS.totalEarned = 0;
-  GS.currentFishCount = 0; GS.caughtFish = [];
-  roundNum.textContent = '1';
-  clearFish();
-  updateCoinCounter();
-  hookGroup.position.set(0,0.5,0);
-  setPhase('IDLE');
-};
+// ============================================================
+// UTILITY
+// ============================================================
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// ─── INIT ────────────────────────────────────────────────
-updateCoinCounter();
-setPhase('IDLE');
-gameLoop();
+// ============================================================
+// GAME INITIALIZATION
+// ============================================================
+let lastTime = 0;
+let started = false;
 
+function animate(timestamp) {
+  requestAnimationFrame(animate);
+  const rawDt = (timestamp - lastTime) / 1000;
+  const dt = Math.min(rawDt, 0.1); // cap at 100ms
+  lastTime = timestamp;
+
+  if (!started) return;
+
+  Gauge.tick(dt);
+  SceneMgr.tick(dt);
+  VFX.tick(dt);
+  UIMgr.tickShake();
+
+  // Update depth indicator
+  if (GS.state === 'HOOK_DESCENDING' || GS.state === 'HOOK_PAUSED' || GS.state === 'HOOK_ASCENDING') {
+    const depthM = Math.max(0, -SceneMgr.hookY).toFixed(1);
+    document.getElementById('depth-indicator').textContent = depthM + 'm';
+  }
+}
+
+function init() {
+  SceneMgr.init();
+  VFX.init();
+
+  // Upgrade button handlers
+  document.getElementById('upgrade-fish').addEventListener('click', () => {
+    if (GS.state !== 'IDLE' && GS.state !== 'SHOP' && GS.state !== 'ROUND_RESET') return;
+    const upg = GS.upgrades.maxFish;
+    if (upg.current >= upg.levels.length - 1) return;
+    const cost = upg.costs[upg.current + 1];
+    if (GS.coins < cost) return;
+    GS.coins -= cost;
+    upg.current++;
+    GS.maxFish = upg.levels[upg.current];
+    UIMgr.updateCoins();
+    UIMgr.renderUpgrades();
+    AudioMgr.playRodUse();
+  });
+
+  document.getElementById('upgrade-depth').addEventListener('click', () => {
+    if (GS.state !== 'IDLE' && GS.state !== 'SHOP' && GS.state !== 'ROUND_RESET') return;
+    const upg = GS.upgrades.maxDepth;
+    if (upg.current >= upg.levels.length - 1) return;
+    const cost = upg.costs[upg.current + 1];
+    if (GS.coins < cost) return;
+    GS.coins -= cost;
+    upg.current++;
+    GS.maxDepth = upg.levels[upg.current];
+    UIMgr.updateCoins();
+    UIMgr.renderUpgrades();
+    AudioMgr.playRodUse();
+  });
+
+  // Play button
+  document.getElementById('play-btn').addEventListener('click', () => {
+    // First click initializes audio
+    AudioMgr.init();
+    AudioMgr.startMusic();
+
+    if (GS.state === 'IDLE' || GS.state === 'SHOP' || GS.state === 'ROUND_RESET') {
+      Gauge.freeze();
+      AudioMgr.playRodUse();
+
+      // Show selected depth briefly
+      const depthLabel = document.createElement('div');
+      depthLabel.className = 'float-label';
+      depthLabel.style.cssText = `left:50%; top: 55%; font-size:28px; color:#fff;`;
+      depthLabel.textContent = `${GS.selectedDepth.toFixed(1)}m DEEP!`;
+      document.getElementById('ui').appendChild(depthLabel);
+      setTimeout(() => depthLabel.remove(), 800);
+
+      GS.transition('HOOK_DESCENDING');
+      // Reset gauge for next use
+      setTimeout(() => Gauge.reset(), 500);
+    }
+  });
+
+  // Initial UI state
+  document.getElementById('upgrades').classList.remove('hidden');
+  UIMgr.renderUpgrades();
+  UIMgr.updateCoins();
+
+  started = true;
+  lastTime = performance.now();
+  requestAnimationFrame(animate);
+}
+
+// Start on load
+window.addEventListener('load', init);
 </script>
 </body>
 </html>
