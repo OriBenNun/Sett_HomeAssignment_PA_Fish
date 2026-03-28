@@ -194,5 +194,83 @@ Now I have a complete picture. Let me convert the audio files to base64 first, t
 
 
 
+1\. The BG music should start upon startup (or ASAP if startup is forbidden by the browser).
+
+2\. the player don't need to click in order to drag - the hook follows the player's cursor/finger from the moment the hook starts the descent, until the moment the hook reaches the surface)
+
+3\. disable drag input when hook reaches the surface
+
+4\. show fish way below (10 meters or even 15) from where the player will actually stop
+
+5\. when a fish is caught an effect will be played with a bouncy amount of the fish worth
+
+6\. once the hook arrived to the surface:
+
+&#x20;  \* the fish are being summed with a jumping animation of the fish,
+
+&#x20;  \* amounts are showing for each fish and attaboys titles if they have any (rare, amazing etc),
+
+&#x20;  \* a coin burst effect from each fish
+
+7\. once all the fish animation are done a summery will be shown with the total amount (with a slight counter action) of the catch
+
+&#x20;  \* coins will fly from the amount to the coin counter
+
+&#x20;  \* coin counter is updated
+
+&#x20;  \* the game reset to the next round (play button re-appears)
+
+8\. I attached 2 screenshots of the actual playable for a reference for color pallete, UI layout, sizes and gameplay field area ratio and other visual aspects
+
+
+
+11:59 PM
+
+
+
+
+
+All 13 checks pass. Copying to outputs.Here's what was changed across all 8 items:
+
+
+
+\*\*1. Music on startup\*\* — `AudioMgr.init()` and `startMusic()` are now called immediately when the page loads. If the browser blocks autoplay (which they typically do without a prior gesture), a one-time fallback listener on `pointerdown`/`touchstart` triggers it on the very first interaction — so music plays as early as possible.
+
+
+
+\*\*2. Hook follows cursor from descent start\*\* — Completely rewrote the pointer system. The hook now tracks the cursor's X position continuously during `HOOK\_DESCENDING`, `HOOK\_PAUSED`, and `HOOK\_ASCENDING` states — no click needed to initiate. Also added a `touchmove` listener for mobile.
+
+
+
+\*\*3. Disable drag at surface\*\* — Tracking only happens when state is one of the three active hook states. The moment the hook reaches the surface and transitions to `SURFACE\_SUMMARY`, the state check naturally disables further movement.
+
+
+
+\*\*4. Fish below actual stop depth\*\* — 40% of the fish pool now spawns 10–15m below the hook's max depth ("tease fish"). They're fully visible as the hook descends, creating anticipation, but are out of reach unless the player upgrades their depth.
+
+
+
+\*\*5. Bouncy value at catch moment\*\* — When a fish is caught during ascent, a large bouncy `+value` label immediately pops up at the fish's screen position (in addition to the existing attaboy for rare+ fish).
+
+
+
+\*\*6. Summary: fish jump + value + attaboy + coin burst\*\* — Each fish now does a proper parabolic 3D bounce (scale pop → arc up → fly off and shrink) rather than just instantly vanishing. The value label, attaboy, and coin burst all fire simultaneously with the jump animation.
+
+
+
+\*\*7. Total summary with animated counter\*\* — After all fish are processed, the coin counter visually ticks up from the old value to the new total using an ease-out cubic animation (\~800ms), synchronized with the flying coins. The counter also pulses at the end.
+
+
+
+\*\*8. Color palette from reference\*\* — Background changed to a bright sky-blue gradient (`#87CEEB`). Scene fog lifted and made lighter. Water changed to a vivid bright blue (`#1E90FF`). The coin counter moved to the \*\*top-left\*\* with a larger font and coin icon to match the reference layout.
+
+
+
+
+
+\---------------
+
+
+
 
 

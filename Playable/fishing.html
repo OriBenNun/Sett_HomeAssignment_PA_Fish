@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --deep-blue: #001133;
+  --deep-blue: #2575c4;
   --surface-teal: #0a8a7a;
   --gold: #ffd700;
   --ui-font: 'Nunito', sans-serif;
@@ -20,7 +20,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: var(--deep-blue); }
+html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(180deg, #87CEEB 0%, #4a9fd8 100%); }
 
 #c {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -39,15 +39,15 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--deep
 
 /* Coin counter */
 #coin-display {
-  position: absolute; top: max(20px, env(safe-area-inset-top, 20px)); left: 50%; transform: translateX(-50%);
+  position: absolute; top: max(16px, env(safe-area-inset-top, 16px)); left: 16px; transform: none;
   display: flex; align-items: center; gap: 8px;
-  background: rgba(0,0,0,0.5); border-radius: 30px; padding: 10px 22px;
-  transition: opacity 0.3s ease; font-size: 22px; font-weight: 800;
-  color: var(--gold); text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  border: 2px solid rgba(255,215,0,0.3); z-index: 5;
+  background: rgba(0,0,0,0.55); border-radius: 30px; padding: 10px 22px;
+  transition: opacity 0.3s ease; font-size: 26px; font-weight: 800;
+  color: var(--gold); text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+  border: 2px solid rgba(255,215,0,0.5); z-index: 5;
 }
 #coin-display .coin-icon {
-  width: 28px; height: 28px; border-radius: 50%;
+  width: 34px; height: 34px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #ffe066, #cc9900);
   border: 2px solid #aa7700; flex-shrink: 0;
   box-shadow: 0 2px 6px rgba(255,215,0,0.4);
@@ -265,9 +265,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--deep
 
 /* Keyframes */
 @keyframes coinPulse {
-  0% { transform: translateX(-50%) scale(1); }
-  50% { transform: translateX(-50%) scale(1.15); }
-  100% { transform: translateX(-50%) scale(1); }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 @keyframes toastFade {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
@@ -417,8 +417,8 @@ const AudioMgr = {
   },
 
   startMusic() {
-    if (!this._musicAudio) return;
-    this._musicAudio.play().catch(()=>{});
+    if (!this._musicAudio) return null;
+    return this._musicAudio.play().catch(()=>{});
   },
 
   stopMusic() {
@@ -464,7 +464,6 @@ const SceneMgr = {
   cameraRestY: 2, cameraRestZ: 8,
   time: 0, pauseTimer: 0,
   ascending: false, descending: false,
-  dragActive: false, dragStartX: 0, hookDragX: 0,
   depthDarkPlane: null,
 
   init() {
@@ -472,17 +471,17 @@ const SceneMgr = {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setClearColor(0x001133);
+    this.renderer.setClearColor(0x87CEEB);
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x001133, 0.035);
+    this.scene.fog = new THREE.FogExp2(0x87CEEB, 0.015);
 
     this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
     this.camera.position.set(0, 2, 8);
     this.camera.lookAt(0, 0, 0);
 
     // Lights
-    const ambient = new THREE.AmbientLight(0x4477aa, 0.6);
+    const ambient = new THREE.AmbientLight(0x88aadd, 0.8);
     this.scene.add(ambient);
     const dir = new THREE.DirectionalLight(0xffeedd, 0.8);
     dir.position.set(3, 5, 4);
@@ -499,6 +498,11 @@ const SceneMgr = {
     uiEl.addEventListener('pointermove', e => this.onPointerMove(e));
     uiEl.addEventListener('pointerup', () => this.onPointerUp());
     uiEl.addEventListener('pointercancel', () => this.onPointerUp());
+    // Touch support
+    uiEl.addEventListener('touchmove', e => {
+      e.preventDefault();
+      this.onPointerMove({ touches: e.touches, target: e.target });
+    }, { passive: false });
 
     window.addEventListener('resize', () => this.resize());
   },
@@ -518,8 +522,8 @@ const SceneMgr = {
       side: THREE.DoubleSide,
       uniforms: {
         uTime: { value: 0 },
-        uColor1: { value: new THREE.Color(0x0a8a7a) },
-        uColor2: { value: new THREE.Color(0x003355) }
+        uColor1: { value: new THREE.Color(0x1E90FF) },
+        uColor2: { value: new THREE.Color(0x006bb5) }
       },
       vertexShader: `
         uniform float uTime;
@@ -624,7 +628,7 @@ const SceneMgr = {
   buildDepthDark() {
     const geo = new THREE.PlaneGeometry(80, 80);
     const mat = new THREE.MeshBasicMaterial({
-      color: 0x000511, transparent: true, opacity: 0.35,
+      color: 0x001a5e, transparent: true, opacity: 0.25,
       side: THREE.DoubleSide, depthWrite: false
     });
     this.depthDarkPlane = new THREE.Mesh(geo, mat);
@@ -720,21 +724,20 @@ const SceneMgr = {
   },
 
   onPointerDown(e) {
-    if (GS.state !== 'HOOK_ASCENDING') return;
-    if (e.target.tagName === 'BUTTON' || e.target.closest('.upgrade-btn')) return;
-    this.dragActive = true;
-    // Immediately snap hook X to cursor position on first click
-    this.hookX = Math.max(-3.5, Math.min(3.5, this.screenToWorldX(e.clientX)));
+    // Buttons are handled separately
   },
 
   onPointerMove(e) {
-    if (!this.dragActive) return;
-    // Hook continuously follows cursor X
-    this.hookX = Math.max(-3.5, Math.min(3.5, this.screenToWorldX(e.clientX)));
+    // Hook follows pointer X during all active hook states — no click required
+    const s = GS.state;
+    if (s !== 'HOOK_DESCENDING' && s !== 'HOOK_PAUSED' && s !== 'HOOK_ASCENDING') return;
+    if (e.target.tagName === 'BUTTON' || e.target.closest('.upgrade-btn')) return;
+    const touchX = e.touches ? e.touches[0].clientX : e.clientX;
+    this.hookX = Math.max(-3.5, Math.min(3.5, this.screenToWorldX(touchX)));
   },
 
   onPointerUp() {
-    this.dragActive = false;
+    // nothing needed
   },
 
   onStateChange(oldState, newState) {
@@ -1001,13 +1004,17 @@ const FishSys = {
 
       const fx = (Math.random() - 0.5) * 6;
       const fz = 0;
+      // Fish spawn across a wider vertical range — deeper ones are visual teasers
+      // 60% of fish are within catchable range, 40% are tease fish below
+      const isTease = Math.random() < 0.40;
+      const visualDepth = isTease ? depth + 10 + Math.random() * 5 : depth;
       let fy;
       if (rarityInfo.minDepth > 0) {
-        fy = -(rarityInfo.minDepth + Math.random() * (depth - rarityInfo.minDepth));
+        fy = -(rarityInfo.minDepth + Math.random() * (visualDepth - rarityInfo.minDepth));
       } else {
-        fy = -(1 + Math.random() * (depth - 1));
+        fy = -(1 + Math.random() * (visualDepth - 1));
       }
-      fy = Math.max(fy, -depth);
+      fy = Math.max(fy, -visualDepth);
 
       mesh.position.set(fx, fy, fz);
       mesh.visible = false;
@@ -1101,6 +1108,11 @@ const FishSys = {
 
     // Update UI
     UIMgr.updateFishCount();
+
+    // Bouncy coin value popup at catch
+    const catchColor = f.rarity === 'legendary' ? '#ff6666' : f.rarity === 'amazing' ? '#ffe040' : f.rarity === 'rare' ? '#ff9944' : '#ffe566';
+    const catchSize = f.rarity === 'legendary' ? 36 : f.rarity === 'amazing' ? 30 : f.rarity === 'rare' ? 26 : 22;
+    UIMgr.showFloatLabel(`+${f.value}`, screenPos.x, screenPos.y - 10, catchColor, catchSize);
 
     // Label popup
     if (f.label) {
@@ -1392,21 +1404,47 @@ const UIMgr = {
   },
 
   _flyFishMeshOff(mesh) {
-    // Animate fish mesh flying up and fading out over 400ms
+    // Animate fish mesh: bounce up then fly off and fade
     const startY = mesh.position.y;
-    const startScale = 1.0;
-    const duration = 0.4;
+    const duration = 0.55;
     let elapsed = 0;
-    const tick = (dt) => {
-      elapsed += dt;
+    const tick = () => {
+      elapsed += 0.016;
       const t = Math.min(elapsed / duration, 1);
-      mesh.position.y = startY + t * 4;
-      const s = startScale * (1 - t);
-      mesh.scale.set(s, s, s);
-      if (t < 1) requestAnimationFrame(() => tick(0.016));
+      // Parabolic arc then exit
+      if (t < 0.5) {
+        const u = t / 0.5;
+        mesh.position.y = startY + Math.sin(u * Math.PI) * 2.0;
+        const s = 1.0 + Math.sin(u * Math.PI) * 0.35;
+        mesh.scale.set(s, s, s);
+      } else {
+        const u = (t - 0.5) / 0.5;
+        mesh.position.y = startY + 1.0 + u * 5;
+        const s = Math.max(0, 1.0 - u * 1.2);
+        mesh.scale.set(s, s, s);
+      }
+      if (t < 1) requestAnimationFrame(tick);
       else SceneMgr.scene.remove(mesh);
     };
-    tick(0);
+    tick();
+  },
+
+  _animateCoinCounter(from, to) {
+    // Animate coin counter ticking up
+    return new Promise(resolve => {
+      const duration = Math.min(800, Math.max(300, (to - from) * 2));
+      const start = performance.now();
+      const el = document.getElementById('coin-text');
+      const tick = (now) => {
+        const t = Math.min((now - start) / duration, 1);
+        // Ease out cubic
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = Math.round(from + eased * (to - from));
+        if (t < 1) requestAnimationFrame(tick);
+        else { el.textContent = to; resolve(); }
+      };
+      requestAnimationFrame(tick);
+    });
   },
 
   async runSummary() {
@@ -1435,40 +1473,46 @@ const UIMgr = {
         totalCoins += f.value;
 
         const mesh = f.mesh;
-        // Quick pop scale
-        mesh.scale.set(1.4, 1.4, 1.4);
-        await sleep(50);
+        const sp = SceneMgr.worldToScreen(mesh.position);
+
+        // Bouncy scale pop
+        mesh.scale.set(1.5, 1.5, 1.5);
+        await sleep(60);
+        mesh.scale.set(0.9, 0.9, 0.9);
+        await sleep(40);
         mesh.scale.set(1.0, 1.0, 1.0);
 
         // Coin burst VFX
-        const sp = SceneMgr.worldToScreen(mesh.position);
-        VFX.emitCoins(sp.x, sp.y, 10);
+        VFX.emitCoins(sp.x, sp.y, 14);
 
-        // Value label (brighter: white outline)
+        // Value label
         const labelColor = f.rarity === 'legendary' ? '#ff6666' : f.rarity === 'amazing' ? '#ffe040' : f.rarity === 'rare' ? '#ff9944' : '#ffe566';
-        const labelSize = f.rarity === 'legendary' ? 34 : f.rarity === 'amazing' ? 30 : 24;
+        const labelSize = f.rarity === 'legendary' ? 38 : f.rarity === 'amazing' ? 32 : f.rarity === 'rare' ? 28 : 24;
         UIMgr.showFloatLabel(`+${f.value}`, sp.x, sp.y - 20, labelColor, labelSize);
 
-        // Fly fish off screen
-        this._flyFishMeshOff(mesh);
-
-        // Attaboy for rarity
+        // Attaboy for rarity (shown immediately with the value)
         if (f.label) {
-          UIMgr.showAttaboy(f.label, f.rarity, sp.x, sp.y - 60);
+          UIMgr.showAttaboy(f.label, f.rarity, sp.x, sp.y - 70);
           if (f.rarity === 'legendary') {
             document.getElementById('screen-flash').classList.add('flash');
             setTimeout(() => document.getElementById('screen-flash').classList.remove('flash'), 300);
-            UIMgr.screenShake(4);
+            UIMgr.screenShake(5);
+          } else if (f.rarity === 'amazing') {
+            UIMgr.screenShake(3);
           }
         }
 
+        // Fish jumps and flies off
+        this._flyFishMeshOff(mesh);
+
         AudioMgr.playCoinJingle();
-        await sleep(200);
+        await sleep(230);
       }
 
-      // Total summary
-      await sleep(200);
+      // — Total summary with animated counter —
+      await sleep(180);
       this.showCoinCounter();
+
       const summaryEl = document.getElementById('summary');
       const totalEl = document.getElementById('summary-total');
       totalEl.textContent = `+${totalCoins} COINS!`;
@@ -1476,15 +1520,21 @@ const UIMgr = {
       await sleep(80);
       totalEl.classList.add('show');
 
-      // Fly coins to counter
+      // Fly coins from summary label to counter
+      await sleep(200);
       const totalRect = totalEl.getBoundingClientRect();
-      this.flyCoinsToCounter(totalRect.left + totalRect.width/2, totalRect.top, Math.min(totalCoins / 10, 10));
+      this.flyCoinsToCounter(totalRect.left + totalRect.width/2, totalRect.top, Math.min(Math.ceil(totalCoins / 8), 12));
 
-      await sleep(500);
+      // Animate counter ticking up while coins fly
+      await sleep(250);
+      const oldCoins = GS.coins;
       GS.coins += totalCoins;
-      this.updateCoins();
+      await this._animateCoinCounter(oldCoins, GS.coins);
+      // Pulse the counter
+      document.getElementById('coin-display').classList.add('pulse');
+      setTimeout(() => document.getElementById('coin-display').classList.remove('pulse'), 300);
 
-      await sleep(900);
+      await sleep(800);
       summaryEl.classList.remove('visible');
       totalEl.classList.remove('show');
     }
@@ -1596,10 +1646,6 @@ function init() {
 
   // Play button
   document.getElementById('play-btn').addEventListener('click', () => {
-    // First click initializes audio
-    AudioMgr.init();
-    AudioMgr.startMusic();
-
     if (GS.state === 'IDLE' || GS.state === 'SHOP' || GS.state === 'ROUND_RESET') {
       Gauge.freeze();
       AudioMgr.playRodUse();
@@ -1626,6 +1672,17 @@ function init() {
   started = true;
   lastTime = performance.now();
   requestAnimationFrame(animate);
+
+  // Try to autoplay music immediately; fall back to first interaction
+  AudioMgr.init();
+  const musicResult = AudioMgr.startMusic();
+  if (!musicResult) {
+    const playMusicOnce = () => {
+      AudioMgr.startMusic();
+    };
+    window.addEventListener('pointerdown', playMusicOnce, { once: true });
+    window.addEventListener('touchstart', playMusicOnce, { once: true });
+  }
 }
 
 // Start on load
