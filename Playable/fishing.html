@@ -378,7 +378,7 @@ const AudioMgr = {
     this.inited = true;
     // Pre-load audio elements
     this._catchAudio = new Audio(this._catchSrc);
-    this._catchAudio.volume = 0.7;
+    this._catchAudio.volume = 0.45;
     this._rodAudio = new Audio(this._rodSrc);
     this._rodAudio.volume = 0.8;
     this._musicAudio = new Audio(this._musicSrc);
@@ -391,7 +391,7 @@ const AudioMgr = {
     try {
       const a = this._catchAudio.cloneNode();
       a.playbackRate = rate;
-      a.volume = 0.7;
+      a.volume = 0.45;
       a.play().catch(()=>{});
     } catch(e) {}
   },
@@ -411,7 +411,7 @@ const AudioMgr = {
     try {
       const a = this._catchAudio.cloneNode();
       a.playbackRate = 1.5;
-      a.volume = 0.45;
+      a.volume = 0.8;
       a.play().catch(()=>{});
     } catch(e) {}
   },
