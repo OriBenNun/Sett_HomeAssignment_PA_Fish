@@ -1,5 +1,4 @@
-Your task:
-		Read the PRD carefully and produce a fully detailed technical plan describing how to implement the playable in a single HTML file. The plan should follow the PRD very strictly; you may add non-mentioned features only if they are trivial. This is not an actual playable ad, so no need to deal with ads and 3rd parties, but it should 100% look and feel like a PA.
+Read the PRD carefully and produce a fully detailed technical plan describing how to implement the playable in a single HTML file. The plan should follow the PRD very strictly; you may add non-mentioned features only if they are trivial. This is not an actual playable ad, so no need to deal with ads and 3rd parties, but it should 100% look and feel like a PA.
 The plan should include:
 		1.  Core systems and architecture.
 		2.  Gameplay flow.
@@ -8,28 +7,28 @@ The plan should include:
     5. 3D visual approach
 		6.  Step by step implementation plan.
 
-Other important things to pay extra attention for while reading the PRD and to describe very specifically in the plan:
-1. How the gauge looks and works (semi-circle, going bad<->perfect<->bad, pendulum with ease movement, etc)
-2. The 3 audio files (names below) are the only assets that we have for the PA, and will be provided along with the implementation plan.
+Other important things to pay extra attention to while reading the PRD and to describe very specifically in the plan:
+1. The buttons in the Idle/Shop phase should have enough margin so they don't overlap on any device
+2. During the catch phase, the player should be able to click/tap anywhere on the screen to start dragging, and the hook should instantly move to the cursor/finger position and follow it until the hook reaches the surface and the surface+summary sequence starts
+3. How the gauge looks and works (semi-circle, going bad<->perfect<->bad, pendulum with ease movement, etc)
+4. The 3 audio files (names below) are the only assets that we have for the PA, and will be provided along with the implementation plan.
 background_music.mp3
 catch.mp3
 rob_use.mp3
-3. The end screen should only show a CTA which opens a blank new tab (for demonstration purposes).
-4. The round counter should be hidden.
-5. Rarer fish should feel much better visually and juice-wise.
+5. The end screen should only show a CTA that opens a blank new tab (for demonstration purposes).
+6. The round counter should be hidden.
+7. Rarer fish should feel much better visually and juice-wise.
 
 Output format: single, clear Markdown document (up to 5 pages) meant to be read by a senior developer
 
-9:10 PM
+10:32 PM
 
-The plan is ready. Here's a quick orientation of the most opinionated decisions in it:
+The plan covers all 6 requested sections. A few decisions worth flagging:
 
-**Gauge** — driven by a pure `Math.sin(elapsed * freq)` which gives free ease-in/out at the extremes without any tweening library. The arc is SVG with a red→yellow→green→yellow→red gradient baked in so the player instantly reads "center = deep = good." Frequency increases each round for urgency.
+**Gauge:** Modeled as an inline SVG speedometer — gradient arc (red→green→red), needle pivoting from the arc center, pendulum driven by a power-curved sine so it lingers at the red extremes and sweeps fast through the green center. Depth mapping makes the center = maxDepth, edges = maxDepth−2m, which matches the PRD's "min depth = max depth−2m" rule.
 
-**3D without real assets** — Three.js r128 from CDN with primitive meshes only. Legendary fish get an animated point-light child and hue-shifting emissive so they glow and feel alive, while common fish are just flat grey boxes. The water is a custom ShaderMaterial so it undulates without any extra library.
+**Catch input:** `pointerdown` teleports the hook X instantly (no lerp) — that's intentional. Lerp only kicks in on `pointermove`. This is the difference between drag feeling responsive vs. sluggish.
 
-**Audio with 3 files** — `catch.mp3` does triple duty: played at 1.0× for common, up to 1.4× playbackRate for legendary — no extra files, but a clear escalation the player feels subconsciously.
+**Rarity juice:** Legendary is dramatically different — 1.9× fish size, pitch-shifted audio at 1.8×, 10px screen shake, full-screen white flash, 50 coin particles + 16 canvas stars. Common catch is intentionally understated so the contrast lands.
 
-**Rarity contrast** — the plan deliberately over-invests VFX budget on legendary (full-screen flash, 60 particles, screen shake, camera hold) and under-invests on common (8 sparkles), so the gap is unmistakable.
-
-**No round counter, no CTA in-game** — both strictly enforced by the architecture: round is a private integer that never touches the DOM, and the only CTA is the END_SCREEN button.
+**Audio strategy:** `rob_use.mp3` does double duty — upgrade purchase (normal pitch) and hook launch (pitch 1.2, louder). This matches the 3-file constraint while keeping the launch feeling punchy.

@@ -1,1 +1,2 @@
-Implement this playable ad as a single HTML file. Follow the implementation plan as closely as possible. Take as much time as needed to make it as production-ready as possible on the first iteration.
+Implement this playable ad as a single HTML file. Follow the implementation plan as closely as possible.
+[Attached the MD plan file + the 3 audio files]

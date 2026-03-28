@@ -1,5 +1,4 @@
-Your task:
-		Read the PRD carefully and produce a fully detailed technical plan describing how to implement the playable in a single HTML file. The plan should follow the PRD very strictly; you may add non-mentioned features only if they are trivial. This is not an actual playable ad, so no need to deal with ads and 3rd parties, but it should 100% look and feel like a PA.
+Read the PRD carefully and produce a fully detailed technical plan describing how to implement the playable in a single HTML file. The plan should follow the PRD very strictly; you may add non-mentioned features only if they are trivial. This is not an actual playable ad, so no need to deal with ads and 3rd parties, but it should 100% look and feel like a PA.
 The plan should include:
 		1.  Core systems and architecture.
 		2.  Gameplay flow.
@@ -8,14 +7,16 @@ The plan should include:
     5. 3D visual approach
 		6.  Step by step implementation plan.
 
-Other important things to pay extra attention for while reading the PRD and to describe very specifically in the plan:
-1. How the gauge looks and works (semi-circle, going bad<->perfect<->bad, pendulum with ease movement, etc)
-2. The 3 audio files (names below) are the only assets that we have for the PA, and will be provided along with the implementation plan.
+Other important things to pay extra attention to while reading the PRD and to describe very specifically in the plan:
+1. The buttons in the Idle/Shop phase should have enough margin so they don't overlap on any device
+2. During the catch phase, the player should be able to click/tap anywhere on the screen to start dragging, and the hook should instantly move to the cursor/finger position and follow it until the hook reaches the surface and the surface+summary sequence starts
+3. How the gauge looks and works (semi-circle, going bad<->perfect<->bad, pendulum with ease movement, etc)
+4. The 3 audio files (names below) are the only assets that we have for the PA, and will be provided along with the implementation plan.
 background_music.mp3
 catch.mp3
 rob_use.mp3
-3. The end screen should only show a CTA which opens a blank new tab (for demonstration purposes).
-4. The round counter should be hidden.
-5. Rarer fish should feel much better visually and juice-wise.
+5. The end screen should only show a CTA that opens a blank new tab (for demonstration purposes).
+6. The round counter should be hidden.
+7. Rarer fish should feel much better visually and juice-wise.
 
 Output format: single, clear Markdown document (up to 5 pages) meant to be read by a senior developer
