@@ -294,3 +294,32 @@ All 13 checks pass. Copying to outputs.Here's what was changed across all 8 item
 
 
 
+
+
+All 5 changes applied:
+
+1\. Water color reverted — Back to the good dodger blue (#1E90FF → #006bb5) at 85% opacity, so the sky (#3bb8f5) and water remain visually distinct while matching the look you preferred.
+
+2\. Tease fish fixed — The 50% of fish that spawn below the hook's max depth are now clamped to just 0–15m below, so they're tantalisingly close but still out of reach (was 12–32m below, way too far away to be meaningful).
+
+3\. All UI doubled — Every CSS size was doubled:
+
+
+
+* Coin counter: 44px font, 52px icon, larger pill
+* Fish counter: 36px font, 220px wide progress bar
+* Upgrade buttons: 30px font, min 240px wide, 100px tall, 26px cost text
+* Gauge: 360×220px (was 200×120)
+* PLAY button: 44px font, 90px padding, 80px border-radius
+* Tutorial toast: 32px font
+* Depth indicator: 36px font
+* Summary total: 68px font
+* Attaboy popups: 68px for legendary, 52px for others
+* Flying coins: 36px (was 20px)
+
+
+
+4\. "CAST!" → "PLAY" — Button label updated.
+
+5\. Fish spawn before each round — FishSys.spawnPool() is now called with a 50ms delay whenever the game enters IDLE or ROUND\_RESET state, so fish are already swimming in the water when the player sees the PLAY button. Also added a floor of 1m to the spawn depth so fish always have vertical space at startup.
+

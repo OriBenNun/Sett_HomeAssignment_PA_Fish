@@ -41,13 +41,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 #coin-display {
   position: absolute; top: max(16px, env(safe-area-inset-top, 16px)); left: 16px; transform: none;
   display: flex; align-items: center; gap: 8px;
-  background: rgba(0,0,0,0.55); border-radius: 30px; padding: 10px 22px;
-  transition: opacity 0.3s ease; font-size: 26px; font-weight: 800;
-  color: var(--gold); text-shadow: 0 2px 4px rgba(0,0,0,0.7);
-  border: 2px solid rgba(255,215,0,0.5); z-index: 5;
+  background: rgba(0,0,0,0.55); border-radius: 50px; padding: 16px 36px;
+  transition: opacity 0.3s ease; font-size: 44px; font-weight: 800;
+  color: var(--gold); text-shadow: 0 3px 6px rgba(0,0,0,0.8);
+  border: 3px solid rgba(255,215,0,0.6); z-index: 5;
 }
 #coin-display .coin-icon {
-  width: 34px; height: 34px; border-radius: 50%;
+  width: 52px; height: 52px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #ffe840, #e6a000);
   border: 2px solid #aa7700; flex-shrink: 0;
   box-shadow: 0 2px 6px rgba(255,215,0,0.4);
@@ -59,17 +59,17 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 #fish-display {
   position: absolute; top: max(20px, env(safe-area-inset-top, 20px)); left: 50%; transform: translateX(-50%);
   display: flex; align-items: center; gap: 10px;
-  background: rgba(0,0,0,0.5); border-radius: 30px; padding: 10px 18px;
+  background: rgba(0,0,0,0.5); border-radius: 50px; padding: 16px 32px;
   transition: opacity 0.3s ease; opacity: 0; pointer-events: none;
   border: 2px solid rgba(10,138,122,0.4); z-index: 5;
 }
 #fish-display.visible { opacity: 1; }
 #fish-count-text {
-  font-size: 20px; font-weight: 800; color: #fff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5); min-width: 40px;
+  font-size: 36px; font-weight: 800; color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5); min-width: 70px;
 }
 #fish-bar-wrap {
-  width: 120px; height: 16px; border-radius: 10px;
+  width: 220px; height: 28px; border-radius: 14px;
   background: rgba(255,255,255,0.15); overflow: hidden;
   border: 1px solid rgba(255,255,255,0.2);
 }
@@ -92,18 +92,18 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 
 /* Upgrade buttons row — sits ABOVE gauge+play */
 #upgrades {
-  display: flex; justify-content: center; gap: 16px;
-  padding: 0 16px; margin-bottom: 20px;
-  width: 100%; max-width: 400px;
+  display: flex; justify-content: center; gap: 28px;
+  padding: 0 24px; margin-bottom: 36px;
+  width: 100%; max-width: 700px;
   transition: opacity 0.3s ease, max-height 0.3s ease;
 }
 #upgrades.hidden { opacity: 0; pointer-events: none !important; max-height: 0; margin-bottom: 0; overflow: hidden; }
 .upgrade-btn {
-  font-family: var(--ui-font); font-weight: 700; font-size: 18px;
-  color: #fff; background: rgba(0,70,160,0.8); border: 2px solid rgba(100,180,255,0.35);
-  border-radius: 14px; padding: 12px 16px; cursor: pointer;
-  text-align: center; min-width: 140px; min-height: 56px;
-  flex: 1; max-width: 180px;
+  font-family: var(--ui-font); font-weight: 700; font-size: 30px;
+  color: #fff; background: rgba(0,70,160,0.8); border: 3px solid rgba(100,180,255,0.35);
+  border-radius: 22px; padding: 20px 24px; cursor: pointer;
+  text-align: center; min-width: 240px; min-height: 100px;
+  flex: 1; max-width: 320px;
   transition: all 0.2s ease;
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   -webkit-tap-highlight-color: transparent;
@@ -115,15 +115,15 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
   opacity: 0.4; cursor: default; border-color: rgba(255,255,255,0.1);
 }
 .upgrade-btn .cost {
-  color: var(--gold); font-size: 15px; margin-top: 6px;
+  color: var(--gold); font-size: 26px; margin-top: 10px;
   display: flex; align-items: center; justify-content: center; gap: 4px;
 }
 .upgrade-btn .cost .mini-coin {
-  width: 14px; height: 14px; border-radius: 50%;
+  width: 22px; height: 22px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #ffe840, #e6a000);
   border: 1px solid #aa7700; display: inline-block;
 }
-.upgrade-btn .level { font-size: 11px; opacity: 0.7; margin-top: 3px; }
+.upgrade-btn .level { font-size: 20px; opacity: 0.7; margin-top: 5px; }
 
 /* Controls (gauge + play button) */
 #controls {
@@ -134,20 +134,20 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 
 /* Gauge */
 #gauge-wrap {
-  width: 200px; height: 120px; position: relative; margin-bottom: 16px;
+  width: 360px; height: 220px; position: relative; margin-bottom: 28px;
 }
 #gauge-svg { width: 100%; height: 100%; }
 
 /* Play button */
 #play-btn {
-  font-family: var(--display-font); font-size: 24px; color: #fff;
+  font-family: var(--display-font); font-size: 44px; color: #fff;
   background: linear-gradient(135deg, #ff8800, #ff0055);
-  border: none; border-radius: 50px; padding: 16px 52px;
-  cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
-  box-shadow: 0 6px 20px rgba(255,51,102,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  border: none; border-radius: 80px; padding: 26px 90px;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
+  box-shadow: 0 10px 34px rgba(255,51,102,0.6), 0 4px 12px rgba(0,0,0,0.4);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   -webkit-tap-highlight-color: transparent;
-  min-height: 56px;
+  min-height: 100px;
   touch-action: manipulation;
 }
 #play-btn:active { transform: scale(0.95); box-shadow: 0 3px 10px rgba(255,51,102,0.4); }
@@ -157,7 +157,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 #tutorial-toast {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
   background: rgba(0,0,0,0.75); color: #fff; font-family: var(--display-font);
-  font-size: 18px; padding: 16px 28px; border-radius: 16px;
+  font-size: 32px; padding: 28px 48px; border-radius: 28px;
   opacity: 0; pointer-events: none; text-align: center;
   border: 2px solid rgba(255,255,255,0.15);
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
@@ -167,10 +167,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 /* Depth indicator */
 #depth-indicator {
   position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-  font-family: var(--display-font); font-size: 20px; color: rgba(255,255,255,0.7);
-  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  font-family: var(--display-font); font-size: 36px; color: rgba(255,255,255,0.85);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
   opacity: 0; transition: opacity 0.3s ease;
-  background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 10px;
+  background: rgba(0,0,0,0.4); padding: 12px 22px; border-radius: 18px;
 }
 
 /* Summary overlay */
@@ -181,7 +181,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 }
 #summary.visible { opacity: 1; pointer-events: auto; }
 #summary-total {
-  font-family: var(--display-font); font-size: 36px; color: var(--gold);
+  font-family: var(--display-font); font-size: 68px; color: var(--gold);
   text-shadow: 0 3px 10px rgba(255,215,0,0.5), 0 0 30px rgba(255,215,0,0.2);
   opacity: 0; transform: scale(0.5);
   transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -238,7 +238,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 /* Flying coin */
 .fly-coin {
   position: fixed; pointer-events: none; z-index: 14;
-  width: 20px; height: 20px; border-radius: 50%;
+  width: 36px; height: 36px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #ffe840, #e6a000);
   border: 2px solid #aa7700;
   box-shadow: 0 2px 8px rgba(255,215,0,0.5);
@@ -336,12 +336,12 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
             <polygon points="100,22 95,105 105,105" fill="#fff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.4))"/>
             <circle cx="100" cy="100" r="8" fill="#fff" stroke="rgba(0,0,0,0.2)" stroke-width="2"/>
           </g>
-          <text x="-4" y="100" font-family="Nunito" font-size="13" fill="rgba(255,255,255,0.85)" font-weight="700" text-anchor="start">MIN</text>
-          <text x="204" y="100" font-family="Nunito" font-size="13" fill="rgba(255,255,255,0.85)" font-weight="700" text-anchor="end">MIN</text>
-          <text x="100" y="12" font-family="Nunito" font-size="13" fill="rgba(255,255,255,1.0)" font-weight="700" text-anchor="middle">MAX</text>
+          <text x="-4" y="100" font-family="Nunito" font-size="22" fill="rgba(255,255,255,0.9)" font-weight="700" text-anchor="start">MIN</text>
+          <text x="204" y="100" font-family="Nunito" font-size="22" fill="rgba(255,255,255,0.9)" font-weight="700" text-anchor="end">MIN</text>
+          <text x="100" y="12" font-family="Nunito" font-size="22" fill="rgba(255,255,255,1.0)" font-weight="700" text-anchor="middle">MAX</text>
         </svg>
       </div>
-      <button id="play-btn">CAST!</button>
+      <button id="play-btn">PLAY</button>
     </div>
   </div>
 
@@ -522,8 +522,8 @@ const SceneMgr = {
       side: THREE.DoubleSide,
       uniforms: {
         uTime: { value: 0 },
-        uColor1: { value: new THREE.Color(0x00b8a9) },
-        uColor2: { value: new THREE.Color(0x005f7a) }
+        uColor1: { value: new THREE.Color(0x1E90FF) },
+        uColor2: { value: new THREE.Color(0x006bb5) }
       },
       vertexShader: `
         uniform float uTime;
@@ -541,7 +541,7 @@ const SceneMgr = {
         varying vec2 vUv;
         void main() {
           vec3 col = mix(uColor1, uColor2, vUv.y);
-          gl_FragColor = vec4(col, 1.0);
+          gl_FragColor = vec4(col, 0.85);
         }
       `
     });
@@ -753,6 +753,8 @@ const SceneMgr = {
       this.hookY = 1.85;
       this.hookX = 1.35;
       FishSys.clearAll();
+      // Pre-spawn fish pool so they're visible before player hits Play
+      setTimeout(() => FishSys.spawnPool(), 50);
     }
   },
 
@@ -981,7 +983,8 @@ const FishSys = {
 
   spawnPool() {
     this.clearAll();
-    const depth = GS.selectedDepth;
+    // Use at least 1m depth so fish have room to spawn
+    const depth = Math.max(GS.selectedDepth, 1);
     // Spawn more fish than maxFish to give variety
     const count = GS.maxFish * 3 + 12; // dense pool with lots of tease fish
 
@@ -991,9 +994,9 @@ const FishSys = {
 
       const fx = (Math.random() - 0.5) * 6;
       const fz = 0;
-      // Fish spawn across a wide vertical range — lots of tease fish below
-      const isTease = Math.random() < 0.60;
-      const visualDepth = isTease ? depth + 12 + Math.random() * 20 : depth;
+      // 50% are tease fish just below the catchable depth (0-15m below)
+      const isTease = Math.random() < 0.50;
+      const visualDepth = isTease ? depth + Math.random() * 15 : depth;
       let fy;
       if (rarityInfo.minDepth > 0) {
         fy = -(rarityInfo.minDepth + Math.random() * (visualDepth - rarityInfo.minDepth));
@@ -1277,7 +1280,7 @@ const UIMgr = {
     const el = document.createElement('div');
     el.className = 'attaboy-label';
     const colorMap = { rare: '#e67e22', amazing: '#f1c40f', legendary: '#ff4444' };
-    el.style.cssText = `left:${x}px; top:${y - 40}px; font-size:${rarity === 'legendary' ? 36 : 28}px; color:${colorMap[rarity] || '#fff'};`;
+    el.style.cssText = `left:${x}px; top:${y - 60}px; font-size:${rarity === 'legendary' ? 68 : 52}px; color:${colorMap[rarity] || '#fff'};`;
     el.textContent = text;
     document.getElementById('ui').appendChild(el);
     setTimeout(() => el.remove(), 2000);
