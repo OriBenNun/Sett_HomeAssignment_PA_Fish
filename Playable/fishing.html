@@ -39,15 +39,15 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 
 /* Coin counter */
 #coin-display {
-  position: absolute; top: max(32px, env(safe-area-inset-top, 16px)); left: 32px; transform: none;
+  position: absolute; top: max(32px, env(safe-area-inset-top, 16px)); left: clamp(12px, 4vw, 32px); transform: none;
   display: flex; align-items: center; gap: 8px;
-  background: rgba(0,0,0,0.55); border-radius: 50px; padding: 16px 36px;
-  transition: opacity 0.3s ease; font-size: 44px; font-weight: 800;
+  background: rgba(0,0,0,0.55); border-radius: 50px; padding: clamp(12px, 3vw, 16px) clamp(20px, 5vw, 36px);
+  transition: opacity 0.3s ease; font-size: clamp(20px, 4vw, 44px); font-weight: 800;
   color: var(--gold); text-shadow: 0 3px 6px rgba(0,0,0,0.8);
   border: 3px solid rgba(255,215,0,0.6); z-index: 5;
 }
 #coin-display .coin-icon {
-  width: 52px; height: 52px; border-radius: 50%;
+  width: clamp(32px, 7vw, 52px); height: clamp(32px, 7vw, 52px); border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #ffe840, #e6a000);
   border: 2px solid #aa7700; flex-shrink: 0;
   box-shadow: 0 2px 6px rgba(255,215,0,0.4);
@@ -59,17 +59,18 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 #fish-display {
   position: absolute; top: max(20px, env(safe-area-inset-top, 20px)); left: 50%; transform: translateX(-50%);
   display: flex; align-items: center; gap: 10px;
-  background: rgba(0,0,0,0.5); border-radius: 50px; padding: 16px 32px;
+  background: rgba(0,0,0,0.5); border-radius: 50px; padding: clamp(12px, 2vw, 16px) clamp(16px, 4vw, 32px);
   transition: opacity 0.3s ease; opacity: 0; pointer-events: none;
   border: 2px solid rgba(10,138,122,0.4); z-index: 5;
+  flex-wrap: wrap; justify-content: center;
 }
 #fish-display.visible { opacity: 1; }
 #fish-count-text {
-  font-size: 36px; font-weight: 800; color: #fff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5); min-width: 70px;
+  font-size: clamp(18px, 4vw, 36px); font-weight: 800; color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5); min-width: 50px;
 }
 #fish-bar-wrap {
-  width: 220px; height: 28px; border-radius: 14px;
+  width: clamp(120px, 40vw, 220px); height: clamp(18px, 3vw, 28px); border-radius: 14px;
   background: rgba(255,255,255,0.15); overflow: hidden;
   border: 1px solid rgba(255,255,255,0.2);
 }
@@ -91,10 +92,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 #bottom-area.hidden { opacity: 0; pointer-events: none !important; }
 #bottom-area > * { pointer-events: auto; }
 
-/* Upgrade buttons column — docked right */
+/* Upgrade buttons column — docked right on desktop, repositioned on mobile */
 #upgrades {
-  position: fixed; right: 10vw; bottom: 50%; max-height: calc(100vh - 48px);
-  display: flex; flex-direction: column; justify-content: flex-end; gap: 72px;
+  position: fixed; right: clamp(12px, 5vw, 10vw); bottom: 50%; max-height: calc(100vh - 48px);
+  display: flex; flex-direction: column; justify-content: flex-end; gap: clamp(40px, 10vw, 72px);
   padding: 0; margin: 0;
   width: auto;
   transition: opacity 0.3s ease, max-height 0.3s ease;
@@ -102,10 +103,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 }
 #upgrades.hidden { opacity: 0; pointer-events: none !important; max-height: 0; margin-bottom: 0; overflow: hidden; }
 .upgrade-btn {
-  font-family: var(--ui-font); font-weight: 700; font-size: 28px;
+  font-family: var(--ui-font); font-weight: 700; font-size: clamp(16px, 4vw, 28px);
   color: #fff; background: rgba(0,70,160,0.8); border: 3px solid rgba(100,180,255,0.35);
-  border-radius: 22px; padding: 18px 20px; cursor: pointer;
-  text-align: center; min-width: 180px; min-height: 90px;
+  border-radius: 22px; padding: clamp(12px, 3vw, 18px) clamp(12px, 3vw, 20px); cursor: pointer;
+  text-align: center; min-width: clamp(120px, 20vw, 180px); min-height: clamp(70px, 15vw, 90px);
   flex: 0 0 auto;
   transition: all 0.2s ease;
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
@@ -118,15 +119,15 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
   opacity: 0.4; cursor: default; border-color: rgba(255,255,255,0.1);
 }
 .upgrade-btn .cost {
-  color: var(--gold); font-size: 26px; margin-top: 10px;
+  color: var(--gold); font-size: clamp(16px, 3vw, 26px); margin-top: 10px;
   display: flex; align-items: center; justify-content: center; gap: 4px;
 }
 .upgrade-btn .cost .mini-coin {
-  width: 22px; height: 22px; border-radius: 50%;
+  width: clamp(16px, 3vw, 22px); height: clamp(16px, 3vw, 22px); border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #ffe840, #e6a000);
   border: 1px solid #aa7700; display: inline-block;
 }
-.upgrade-btn .level { font-size: 20px; opacity: 0.7; margin-top: 5px; }
+.upgrade-btn .level { font-size: clamp(14px, 2.5vw, 20px); opacity: 0.7; margin-top: 5px; }
 
 /* Controls (gauge + play button) */
 #controls {
@@ -137,20 +138,20 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 
 /* Gauge */
 #gauge-wrap {
-  width: 360px; height: 220px; position: relative; margin-bottom: 28px;
+  width: clamp(200px, 50vw, 360px); height: clamp(120px, 30vh, 220px); position: relative; margin-bottom: clamp(16px, 4vw, 28px);
 }
 #gauge-svg { width: 100%; height: 100%; }
 
 /* Play button */
 #play-btn {
-  font-family: var(--display-font); font-size: 44px; color: #fff;
+  font-family: var(--display-font); font-size: clamp(24px, 5vw, 44px); color: #fff;
   background: linear-gradient(135deg, #ff8800, #ff0055);
-  border: none; border-radius: 80px; padding: 26px 90px;
+  border: none; border-radius: 80px; padding: clamp(16px, 4vw, 26px) clamp(40px, 12vw, 90px);
   cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
   box-shadow: 0 10px 34px rgba(255,51,102,0.6), 0 4px 12px rgba(0,0,0,0.4);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   -webkit-tap-highlight-color: transparent;
-  min-height: 100px;
+  min-height: clamp(60px, 12vw, 100px);
   touch-action: manipulation;
 }
 #play-btn:active { transform: scale(0.95); box-shadow: 0 3px 10px rgba(255,51,102,0.4); }
@@ -169,11 +170,11 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 
 /* Depth indicator */
 #depth-indicator {
-  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-  font-family: var(--display-font); font-size: 36px; color: rgba(255,255,255,0.85);
+  position: absolute; right: clamp(8px, 3vw, 16px); top: 50%; transform: translateY(-50%);
+  font-family: var(--display-font); font-size: clamp(20px, 4vw, 36px); color: rgba(255,255,255,0.85);
   text-shadow: 0 2px 8px rgba(0,0,0,0.8);
   opacity: 0; transition: opacity 0.3s ease;
-  background: rgba(0,0,0,0.4); padding: 12px 22px; border-radius: 18px;
+  background: rgba(0,0,0,0.4); padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 22px); border-radius: 18px;
 }
 
 /* Summary overlay */
@@ -197,24 +198,25 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
   background: radial-gradient(ellipse at center, rgba(0,17,51,0.85), rgba(0,0,0,0.95));
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   opacity: 0; pointer-events: none; transition: opacity 0.6s ease; z-index: 100;
-  gap: 40px; padding: 40px 24px;
+  gap: clamp(20px, 5vw, 40px); padding: clamp(20px, 5vw, 40px);
+  overflow-y: auto;
 }
 #end-screen.visible { opacity: 1; pointer-events: auto; }
 #end-title {
-  font-family: var(--display-font); font-size: clamp(32px, 8vw, 48px); color: #fff;
+  font-family: var(--display-font); font-size: clamp(28px, 8vw, 48px); color: #fff;
   text-shadow: 0 0 30px rgba(10,138,122,0.6), 0 4px 15px rgba(0,0,0,0.5);
   text-align: center; line-height: 1.2;
 }
-#end-title span { color: var(--gold); display: block; font-size: clamp(20px, 5vw, 28px); margin-top: 8px; }
+#end-title span { color: var(--gold); display: block; font-size: clamp(18px, 5vw, 28px); margin-top: 8px; }
 #cta-btn {
-  font-family: var(--display-font); font-size: clamp(22px, 5vw, 32px); color: #fff;
+  font-family: var(--display-font); font-size: clamp(18px, 5vw, 32px); color: #fff;
   background: linear-gradient(135deg, #00c9ff, #0a8a7a);
-  border: none; border-radius: 60px; padding: 20px 64px;
+  border: none; border-radius: 60px; padding: clamp(14px, 3vw, 20px) clamp(40px, 8vw, 64px);
   cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
   box-shadow: 0 8px 30px rgba(10,138,122,0.5), 0 0 60px rgba(10,138,122,0.2);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   animation: ctaPulse 2s ease-in-out infinite;
-  min-height: 64px; min-width: 220px;
+  min-height: clamp(50px, 10vw, 64px); min-width: clamp(160px, 40vw, 220px);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
@@ -294,6 +296,121 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gra
 @keyframes ctaPulse {
   0%, 100% { box-shadow: 0 8px 30px rgba(10,138,122,0.5), 0 0 60px rgba(10,138,122,0.2); }
   50% { box-shadow: 0 8px 40px rgba(10,138,122,0.7), 0 0 80px rgba(10,138,122,0.35); transform: scale(1.03); }
+}
+
+/* Mobile-first responsive adjustments */
+@media (max-width: 768px) {
+  #coin-display {
+    left: clamp(8px, 3vw, 16px);
+  }
+  
+  #controls {
+    max-width: 90vw;
+  }
+  
+  #play-btn:hover {
+    transform: scale(1.02);
+  }
+  
+  .float-label {
+    font-size: clamp(16px, 3.5vw, 24px);
+  }
+}
+
+@media (max-width: 480px) {
+  #coin-display {
+    left: 8px;
+    padding: 8px clamp(12px, 4vw, 20px);
+  }
+  
+  #coin-display .coin-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  #fish-display {
+    top: max(12px, env(safe-area-inset-top, 12px));
+    padding: 8px clamp(12px, 3vw, 16px);
+  }
+  
+  #upgrades {
+    right: 8px;
+    bottom: 60px;
+    gap: 48px;
+  }
+  
+  .upgrade-btn {
+    min-width: 100px;
+    min-height: 70px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .upgrade-btn .cost {
+    font-size: 14px;
+    margin-top: 6px;
+  }
+  
+  .upgrade-btn .cost .mini-coin {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .upgrade-btn .level {
+    font-size: 12px;
+  }
+  
+  #gauge-wrap {
+    width: min(85vw, 240px);
+    height: min(85vw, 160px);
+    margin-bottom: 12px;
+  }
+  
+  #play-btn {
+    padding: 12px 24px;
+    font-size: 18px;
+    min-height: 56px;
+  }
+  
+  #tutorial-toast {
+    font-size: clamp(20px, 6vw, 28px);
+    padding: clamp(16px, 4vw, 24px) clamp(24px, 6vw, 32px);
+  }
+  
+  #depth-indicator {
+    font-size: 20px;
+    padding: 6px 10px;
+  }
+  
+  #end-screen {
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  #cta-btn {
+    padding: 12px 32px;
+    font-size: 18px;
+    min-height: 50px;
+    min-width: 140px;
+  }
+  
+  .float-label {
+    font-size: clamp(14px, 3vw, 20px);
+  }
+}
+
+@media (max-height: 600px) {
+  #upgrades {
+    gap: clamp(32px, 5vh, 48px);
+  }
+  
+  #gauge-wrap {
+    margin-bottom: 12px;
+  }
+  
+  #controls {
+    gap: 8px;
+  }
 }
 </style>
 </head>
